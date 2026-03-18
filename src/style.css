@@ -272,6 +272,40 @@ h2 {
   letter-spacing: 0.02em;
 }
 
+/* ---- QUESTION DISPLAY ---- */
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.question-header label {
+  margin-bottom: 0;
+}
+
+.btn-sm {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.btn-ghost.btn-sm:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.question-display {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem;
+  line-height: 1.5;
+}
+
 /* ---- FORMS ---- */
 
 .field {

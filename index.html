@@ -61,12 +61,15 @@
 
         <section class="card">
           <h2>Answer Trivia</h2>
-          <p class="hint">Ask any question about GenLayer and provide your best answer. An AI evaluator grades your response (1–5 stars) and you earn <strong>10 GEN per star</strong>.</p>
+          <p class="hint">Answer the question below about GenLayer. An AI evaluator grades your response (1–5 stars) and you earn <strong>10 GEN per star</strong>.</p>
 
           <form id="trivia-form">
             <div class="field">
-              <label for="input-question">Question</label>
-              <input type="text" id="input-question" placeholder="e.g. What consensus mechanism does GenLayer use?" required />
+              <div class="question-header">
+                <label>Question</label>
+                <button type="button" id="btn-shuffle" class="btn btn-ghost btn-sm" title="New question">Shuffle</button>
+              </div>
+              <p class="question-display" id="question-display"></p>
             </div>
             <div class="field">
               <label for="input-answer">Your Answer</label>

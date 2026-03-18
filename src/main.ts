@@ -8,6 +8,7 @@ import {
   isWriteReady,
   EXPLORER_URL,
 } from './contract';
+import { getRandomQuestion } from './questions';
 
 // ---- DOM refs ----
 
@@ -25,7 +26,8 @@ const walletBalanceEl = $('wallet-balance');
 const userClaimsEl = $('user-claims');
 
 const triviaForm = $<HTMLFormElement>('trivia-form');
-const inputQuestion = $<HTMLInputElement>('input-question');
+const questionDisplay = $('question-display');
+const btnShuffle = $<HTMLButtonElement>('btn-shuffle');
 const inputAnswer = $<HTMLTextAreaElement>('input-answer');
 const btnSubmit = $<HTMLButtonElement>('btn-submit');
 
@@ -53,10 +55,13 @@ function shortenAddress(addr: string): string {
 // ---- State ----
 
 let currentAddress: string | null = localStorage.getItem('trivia-faucet-addr');
+let currentQuestion: string = getRandomQuestion();
 
 // ---- Init ----
 
 function init() {
+  questionDisplay.textContent = currentQuestion;
+
   if (currentAddress && isValidAddress(currentAddress)) {
     showWallet(currentAddress);
   }
@@ -76,6 +81,13 @@ function init() {
     inputAddress.value = '';
     addressError.classList.add('hidden');
     updateSubmitButton();
+  });
+
+  btnShuffle.addEventListener('click', () => {
+    currentQuestion = getRandomQuestion();
+    questionDisplay.textContent = currentQuestion;
+    inputAnswer.value = '';
+    resultArea.classList.add('hidden');
   });
 
   triviaForm.addEventListener('submit', handleSubmit);
@@ -142,11 +154,12 @@ async function handleSubmit(e: Event) {
 
   if (!currentAddress) return;
 
-  const question = inputQuestion.value.trim();
+  const question = currentQuestion;
   const answer = inputAnswer.value.trim();
   if (!question || !answer) return;
 
   btnSubmit.disabled = true;
+  btnShuffle.disabled = true;
   resultArea.classList.add('hidden');
   txPending.classList.remove('hidden');
 
@@ -161,8 +174,13 @@ async function handleSubmit(e: Event) {
     resultGrade.textContent = '\u2605'.repeat(result.grade) + '\u2606'.repeat(5 - result.grade);
     resultReward.textContent = `+${result.reward}`;
     resultReasoning.textContent = result.reasoning;
-    resultStatus.innerHTML = `Transaction finalized — <a href="${EXPLORER_URL}/tx/${result.txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
+    resultStatus.innerHTML = `Transaction accepted — <a href="${EXPLORER_URL}/tx/${result.txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
     resultStatus.style.color = '';
+
+    // Load a new question for next round
+    currentQuestion = getRandomQuestion();
+    questionDisplay.textContent = currentQuestion;
+    inputAnswer.value = '';
 
     refreshStats();
     refreshWalletData(currentAddress);
@@ -176,6 +194,7 @@ async function handleSubmit(e: Event) {
     resultStatus.textContent = '';
     resultStatus.style.color = 'var(--error)';
   } finally {
+    btnShuffle.disabled = false;
     updateSubmitButton();
   }
 }
