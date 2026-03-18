@@ -27,6 +27,8 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_FAUCET_PK: ${{ secrets.FAUCET_PK }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

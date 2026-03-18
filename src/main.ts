@@ -4,6 +4,8 @@ import {
   getWalletBalance,
   getTotalDistributed,
   getUserClaims,
+  answerTrivia,
+  isWriteReady,
 } from './contract';
 
 // ---- DOM refs ----
@@ -20,6 +22,20 @@ const walletInfo = $('wallet-info');
 const walletAddressEl = $('wallet-address');
 const walletBalanceEl = $('wallet-balance');
 const userClaimsEl = $('user-claims');
+
+const triviaForm = $<HTMLFormElement>('trivia-form');
+const inputQuestion = $<HTMLInputElement>('input-question');
+const inputAnswer = $<HTMLTextAreaElement>('input-answer');
+const btnSubmit = $<HTMLButtonElement>('btn-submit');
+
+const resultArea = $('result-area');
+const resultGrade = $('result-grade');
+const resultReward = $('result-reward');
+const resultReasoning = $('result-reasoning');
+const resultStatus = $('result-status');
+
+const txPending = $('tx-pending');
+const txStatusText = $('tx-status-text');
 
 // ---- Address validation ----
 
@@ -58,7 +74,10 @@ function init() {
     walletInfo.classList.add('hidden');
     inputAddress.value = '';
     addressError.classList.add('hidden');
+    updateSubmitButton();
   });
+
+  triviaForm.addEventListener('submit', handleSubmit);
 }
 
 function handleLookup() {
@@ -83,6 +102,11 @@ function showWallet(addr: string) {
   walletAddressEl.textContent = shortenAddress(addr);
   walletInfo.classList.remove('hidden');
   refreshWalletData(addr);
+  updateSubmitButton();
+}
+
+function updateSubmitButton() {
+  btnSubmit.disabled = !currentAddress || !isWriteReady();
 }
 
 // ---- Data refresh ----
@@ -108,6 +132,51 @@ function refreshWalletData(addr: string) {
   getUserClaims(addr)
     .then((c) => (userClaimsEl.textContent = c))
     .catch(() => (userClaimsEl.textContent = '—'));
+}
+
+// ---- Submit trivia ----
+
+async function handleSubmit(e: Event) {
+  e.preventDefault();
+
+  if (!currentAddress) return;
+
+  const question = inputQuestion.value.trim();
+  const answer = inputAnswer.value.trim();
+  if (!question || !answer) return;
+
+  btnSubmit.disabled = true;
+  resultArea.classList.add('hidden');
+  txPending.classList.remove('hidden');
+
+  try {
+    const result = await answerTrivia(question, answer, currentAddress, (msg) => {
+      txStatusText.textContent = msg;
+    });
+
+    txPending.classList.add('hidden');
+    resultArea.classList.remove('hidden');
+
+    resultGrade.textContent = '\u2605'.repeat(result.grade) + '\u2606'.repeat(5 - result.grade);
+    resultReward.textContent = `+${result.reward}`;
+    resultReasoning.textContent = result.reasoning;
+    resultStatus.textContent = 'Transaction finalized';
+    resultStatus.style.color = '';
+
+    refreshStats();
+    refreshWalletData(currentAddress);
+  } catch (err: any) {
+    txPending.classList.add('hidden');
+    resultArea.classList.remove('hidden');
+
+    resultGrade.textContent = '\u2715';
+    resultReward.textContent = '';
+    resultReasoning.textContent = err?.message || 'Transaction failed. Please try again.';
+    resultStatus.textContent = '';
+    resultStatus.style.color = 'var(--error)';
+  } finally {
+    updateSubmitButton();
+  }
 }
 
 // ---- Start ----
