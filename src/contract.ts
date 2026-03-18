@@ -1,22 +1,21 @@
 import { createClient } from 'genlayer-js';
-import { testnetBradbury } from 'genlayer-js/chains';
 import { TransactionStatus } from 'genlayer-js/types';
 import { JsonRpcProvider, formatEther } from 'ethers';
 import type { Account } from './wallet';
 
 const CONTRACT = '0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F' as any;
-const RPC_URL = (testnetBradbury as any).rpcUrls.default.http[0] as string;
+const RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
 
 // ethers provider for direct chain queries (eth_getBalance)
 const provider = new JsonRpcProvider(RPC_URL);
 
-// genlayer-js clients for contract reads/writes
-const readClient = createClient({ chain: testnetBradbury });
+// genlayer-js clients — override endpoint to use HTTPS RPC
+const readClient = createClient({ endpoint: RPC_URL });
 let writeClient: ReturnType<typeof createClient> | null = null;
 
 export function setAccount(account: Account | null) {
   if (account) {
-    writeClient = createClient({ chain: testnetBradbury, account });
+    writeClient = createClient({ endpoint: RPC_URL, account });
   } else {
     writeClient = null;
   }
