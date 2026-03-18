@@ -21,6 +21,8 @@ const writeClient = faucetAccount
   ? createClient({ endpoint: RPC_URL, chain: CHAIN, account: faucetAccount })
   : null;
 
+const REWARD_PER_GRADE = 10; // 10 GEN per grade point
+
 // ---- Chain balance queries (ethers) ----
 
 export async function getFaucetBalance(): Promise<string> {
@@ -31,6 +33,10 @@ export async function getFaucetBalance(): Promise<string> {
 export async function getWalletBalance(address: string): Promise<string> {
   const balance = await provider.getBalance(address);
   return formatGEN(balance);
+}
+
+export async function getRawBalance(address: string): Promise<bigint> {
+  return provider.getBalance(address);
 }
 
 // ---- Contract read methods (genlayer-js) ----
@@ -57,63 +63,55 @@ export async function getUserClaims(address: string): Promise<string> {
 
 export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com';
 
-export interface TriviaResult {
-  grade: number;
-  reasoning: string;
-  reward: string;
-  txHash: string;
+export interface ProgressCallback {
+  onSubmitted: (txHash: string) => void;
+  onAccepted: (txHash: string) => void;
+  onTransfer: (grade: number, rewardGEN: number) => void;
 }
 
-export async function answerTrivia(
+export async function submitTrivia(
   question: string,
   answer: string,
   recipient: string,
-  onStatus: (msg: string) => void,
-): Promise<TriviaResult> {
+): Promise<string> {
   if (!writeClient) throw new Error('Faucet wallet not configured');
 
-  onStatus('Submitting transaction...');
-  const hash = await writeClient.writeContract({
+  return writeClient.writeContract({
     address: CONTRACT,
     functionName: 'answer_trivia',
     args: [question, answer, recipient],
     value: 0n,
   });
+}
 
-  onStatus(`Waiting for consensus... <a href="${EXPLORER_URL}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 10)}...${hash.slice(-6)}</a>`);
-  const receipt = await writeClient.waitForTransactionReceipt({
-    hash,
+export async function waitForAcceptance(txHash: string): Promise<void> {
+  if (!writeClient) throw new Error('Faucet wallet not configured');
+
+  await writeClient.waitForTransactionReceipt({
+    hash: txHash as any,
     status: TransactionStatus.ACCEPTED,
     retries: 120,
     interval: 5000,
   });
+}
 
-  // Parse result from receipt
-  const data = (receipt as any)?.data ?? receipt;
-  const result = data?.result ?? data?.execution_output ?? data;
-
-  let grade = 0;
-  let reasoning = '';
-
-  if (result && typeof result === 'object') {
-    grade = Number(result.grade ?? result.leader_receipt?.result?.grade ?? 0);
-    reasoning = String(
-      result.reasoning ?? result.leader_receipt?.result?.reasoning ?? '',
-    );
+export async function waitForTransfer(
+  recipient: string,
+  balanceBefore: bigint,
+  maxRetries = 60,
+  interval = 3000,
+): Promise<{ grade: number; rewardGEN: number }> {
+  for (let i = 0; i < maxRetries; i++) {
+    await new Promise((r) => setTimeout(r, interval));
+    const balanceNow = await provider.getBalance(recipient);
+    if (balanceNow > balanceBefore) {
+      const diff = balanceNow - balanceBefore;
+      const rewardGEN = Number(formatEther(diff));
+      const grade = Math.round(rewardGEN / REWARD_PER_GRADE);
+      return { grade: Math.max(1, Math.min(5, grade)), rewardGEN };
+    }
   }
-
-  if (!grade) {
-    grade = 3;
-    reasoning = 'Transaction accepted by consensus.';
-  }
-
-  const rewardGEN = grade * 10;
-  return {
-    grade,
-    reasoning,
-    reward: `${rewardGEN} GEN`,
-    txHash: hash,
-  };
+  throw new Error('Transfer not detected — it may still be processing.');
 }
 
 export function isWriteReady(): boolean {
@@ -122,7 +120,7 @@ export function isWriteReady(): boolean {
 
 // ---- Helpers ----
 
-function formatGEN(raw: unknown): string {
+export function formatGEN(raw: unknown): string {
   if (typeof raw === 'bigint') {
     const gen = Number(formatEther(raw));
     return fmtGen(gen);

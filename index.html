@@ -80,21 +80,30 @@
             </button>
           </form>
 
+          <div id="progress-area" class="hidden">
+            <div class="progress-card">
+              <div class="progress-step" id="step-submit">
+                <span class="step-icon" id="step-submit-icon"></span>
+                <span class="step-text" id="step-submit-text">Submitting transaction...</span>
+              </div>
+              <div class="progress-step" id="step-consensus">
+                <span class="step-icon" id="step-consensus-icon"></span>
+                <span class="step-text" id="step-consensus-text">Waiting for consensus...</span>
+              </div>
+              <div class="progress-step" id="step-transfer">
+                <span class="step-icon" id="step-transfer-icon"></span>
+                <span class="step-text" id="step-transfer-text">Waiting for GEN transfer...</span>
+              </div>
+            </div>
+          </div>
+
           <div id="result-area" class="hidden">
             <div class="result-card">
               <div class="result-header">
                 <span class="result-grade" id="result-grade"></span>
                 <span class="result-reward" id="result-reward"></span>
               </div>
-              <p class="result-reasoning" id="result-reasoning"></p>
               <p class="result-status" id="result-status"></p>
-            </div>
-          </div>
-
-          <div id="tx-pending" class="hidden">
-            <div class="spinner-row">
-              <div class="spinner"></div>
-              <span id="tx-status-text">Submitting transaction...</span>
             </div>
           </div>
         </section>
