@@ -1,14 +1,17 @@
 import { createClient } from 'genlayer-js';
 import { testnetBradbury } from 'genlayer-js/chains';
 import { TransactionStatus } from 'genlayer-js/types';
+import { JsonRpcProvider, formatEther } from 'ethers';
 import type { Account } from './wallet';
 
 const CONTRACT = '0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F' as any;
+const RPC_URL = (testnetBradbury as any).rpcUrls.default.http[0] as string;
 
-// Read-only client (no account needed)
+// ethers provider for direct chain queries (eth_getBalance)
+const provider = new JsonRpcProvider(RPC_URL);
+
+// genlayer-js clients for contract reads/writes
 const readClient = createClient({ chain: testnetBradbury });
-
-// Authenticated client (set when wallet connects)
 let writeClient: ReturnType<typeof createClient> | null = null;
 
 export function setAccount(account: Account | null) {
@@ -19,16 +22,19 @@ export function setAccount(account: Account | null) {
   }
 }
 
-// ---- Read methods ----
+// ---- Chain balance queries (ethers) ----
 
-export async function getBalance(): Promise<string> {
-  const raw = await readClient.readContract({
-    address: CONTRACT,
-    functionName: 'get_balance',
-    args: [],
-  });
-  return formatGEN(raw);
+export async function getFaucetBalance(): Promise<string> {
+  const balance = await provider.getBalance(CONTRACT);
+  return formatGEN(balance);
 }
+
+export async function getWalletBalance(address: string): Promise<string> {
+  const balance = await provider.getBalance(address);
+  return formatGEN(balance);
+}
+
+// ---- Contract read methods (genlayer-js) ----
 
 export async function getTotalDistributed(): Promise<string> {
   const raw = await readClient.readContract({
@@ -93,7 +99,6 @@ export async function answerTrivia(
     );
   }
 
-  // If we couldn't parse from receipt, the tx was accepted — show generic success
   if (!grade) {
     grade = 3;
     reasoning = 'Transaction accepted by consensus.';
@@ -110,9 +115,18 @@ export async function answerTrivia(
 // ---- Helpers ----
 
 function formatGEN(raw: unknown): string {
+  if (typeof raw === 'bigint') {
+    const gen = Number(formatEther(raw));
+    return fmtGen(gen);
+  }
   const n = Number(raw);
   if (isNaN(n) || n === 0) return '0 GEN';
   const gen = n / 1e18;
+  return fmtGen(gen);
+}
+
+function fmtGen(gen: number): string {
+  if (gen === 0) return '0 GEN';
   if (gen >= 1000) return `${(gen / 1000).toFixed(1)}k GEN`;
   if (gen >= 1) return `${gen.toFixed(1)} GEN`;
   return `${gen.toFixed(4)} GEN`;

@@ -4,26 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trivia Faucet — GenLayer</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
+    <link rel="icon" type="image/png" href="/trivia-faucet/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="app">
-      <div class="scanlines"></div>
-
       <header>
-        <div class="header-left">
-          <h1><span class="accent">◈</span> Trivia Faucet</h1>
-          <p class="subtitle">GenLayer Bradbury Testnet</p>
+        <div class="header-brand">
+          <img src="/trivia-faucet/favicon.png" alt="GenLayer" class="logo" width="32" height="32" />
+          <div>
+            <h1>Trivia Faucet</h1>
+            <span class="badge">Bradbury Testnet</span>
+          </div>
         </div>
         <div class="header-stats">
-          <div class="stat">
+          <div class="stat-card">
             <span class="stat-label">Faucet Balance</span>
             <span class="stat-value" id="faucet-balance">—</span>
           </div>
-          <div class="stat">
+          <div class="stat-card">
             <span class="stat-label">Total Distributed</span>
             <span class="stat-value" id="total-distributed">—</span>
           </div>
@@ -31,36 +32,42 @@
       </header>
 
       <main>
-        <section class="wallet-panel" id="wallet-section">
-          <h2>// Wallet</h2>
+        <section class="card" id="wallet-section">
+          <h2>Wallet</h2>
           <div id="wallet-disconnected">
             <p class="hint">Generate a new wallet or import an existing private key to begin.</p>
-            <div class="wallet-actions">
+            <div class="btn-group">
               <button id="btn-generate" class="btn btn-primary">Generate New Wallet</button>
-              <button id="btn-import" class="btn btn-secondary">Import Key</button>
+              <button id="btn-import" class="btn btn-outline">Import Key</button>
             </div>
             <div id="import-form" class="hidden">
-              <input type="password" id="input-private-key" placeholder="0x..." autocomplete="off" />
-              <button id="btn-import-confirm" class="btn btn-primary">Import</button>
+              <div class="input-row">
+                <input type="password" id="input-private-key" placeholder="0x..." autocomplete="off" />
+                <button id="btn-import-confirm" class="btn btn-primary">Import</button>
+              </div>
             </div>
           </div>
           <div id="wallet-connected" class="hidden">
-            <div class="wallet-info">
-              <div class="wallet-row">
-                <span class="label">Address</span>
-                <span class="mono" id="wallet-address">—</span>
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">Address</span>
+                <span class="info-value mono" id="wallet-address">—</span>
               </div>
-              <div class="wallet-row">
-                <span class="label">My Claims</span>
-                <span class="mono" id="user-claims">—</span>
+              <div class="info-row">
+                <span class="info-label">GEN Balance</span>
+                <span class="info-value" id="wallet-balance">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Total Earned</span>
+                <span class="info-value" id="user-claims">—</span>
               </div>
             </div>
             <button id="btn-disconnect" class="btn btn-ghost">Disconnect</button>
           </div>
         </section>
 
-        <section class="trivia-panel">
-          <h2>// Answer Trivia</h2>
+        <section class="card">
+          <h2>Answer Trivia</h2>
           <p class="hint">Ask any question about GenLayer and provide your best answer. An AI evaluator grades your response (1–5 stars) and you earn <strong>10 GEN per star</strong>.</p>
 
           <form id="trivia-form">
@@ -72,7 +79,7 @@
               <label for="input-answer">Your Answer</label>
               <textarea id="input-answer" rows="4" placeholder="e.g. GenLayer uses Optimistic Democracy, where validators running different LLMs vote on the validity of non-deterministic AI operations..." required></textarea>
             </div>
-            <button type="submit" id="btn-submit" class="btn btn-primary btn-large" disabled>
+            <button type="submit" id="btn-submit" class="btn btn-primary btn-block" disabled>
               Submit Answer
             </button>
           </form>
@@ -89,7 +96,7 @@
           </div>
 
           <div id="tx-pending" class="hidden">
-            <div class="spinner-wrap">
+            <div class="spinner-row">
               <div class="spinner"></div>
               <span id="tx-status-text">Submitting transaction...</span>
             </div>
@@ -100,12 +107,10 @@
       <footer>
         <p>
           Contract
-          <a href="https://explorer-bradbury.genlayer.com/address/0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F" target="_blank" rel="noopener">
-            0x73ee…c65F
-          </a>
-          ·
-          <a href="https://docs.genlayer.com" target="_blank" rel="noopener">GenLayer Docs</a>
-          ·
+          <a href="https://explorer-bradbury.genlayer.com/address/0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F" target="_blank" rel="noopener">0x73ee…c65F</a>
+          &middot;
+          <a href="https://docs.genlayer.com" target="_blank" rel="noopener">Docs</a>
+          &middot;
           <a href="https://github.com/genlayerlabs/trivia-faucet" target="_blank" rel="noopener">Source</a>
         </p>
       </footer>

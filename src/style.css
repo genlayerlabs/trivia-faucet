@@ -1,27 +1,26 @@
 /* ============================================
    Trivia Faucet — GenLayer Bradbury Testnet
-   Aesthetic: Terminal-luxe / dark editorial
+   Styled to match explorer-bradbury.genlayer.com
    ============================================ */
 
 :root {
-  --bg: #0a0a0f;
-  --bg-card: #111118;
-  --bg-card-hover: #16161f;
-  --border: #1e1e2a;
-  --border-accent: #2a2a3a;
-  --text: #c8c8d4;
-  --text-muted: #6a6a7a;
-  --text-dim: #44445a;
-  --accent: #5eead4;
-  --accent-dim: #2a7a6a;
-  --accent-glow: rgba(94, 234, 212, 0.15);
-  --warn: #f59e0b;
-  --error: #ef4444;
-  --success: #22c55e;
-  --font-body: 'Space Mono', 'Courier New', monospace;
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --radius: 6px;
-  --transition: 180ms ease;
+  --bg: hsl(220, 20%, 97%);
+  --bg-card: hsl(0, 0%, 100%);
+  --border: hsl(214, 32%, 91%);
+  --text: hsl(220, 20%, 20%);
+  --text-secondary: hsl(220, 10%, 46%);
+  --text-muted: hsl(220, 10%, 62%);
+  --primary: hsl(217, 85%, 56%);
+  --primary-hover: hsl(217, 85%, 48%);
+  --primary-light: hsl(217, 85%, 96%);
+  --accent: hsl(324, 76%, 58%);
+  --success: hsl(152, 60%, 42%);
+  --error: hsl(0, 84%, 60%);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --transition: 150ms ease;
 }
 
 *, *::before, *::after {
@@ -33,10 +32,11 @@
 html {
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -44,25 +44,9 @@ body {
 }
 
 #app {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
-  position: relative;
-}
-
-/* Subtle scanline overlay */
-.scanlines {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
+  padding: 1.5rem 1rem;
 }
 
 /* ---- HEADER ---- */
@@ -70,106 +54,107 @@ body {
 header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  border-radius: 6px;
+}
+
 h1 {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  font-weight: 400;
-  color: #fff;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
-h1 .accent {
-  color: var(--accent);
-  font-size: 1.4rem;
-}
-
-.subtitle {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin-top: 0.25rem;
+.badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  letter-spacing: 0.02em;
 }
 
 .header-stats {
   display: flex;
-  gap: 1.5rem;
+  gap: 0.75rem;
 }
 
-.stat {
-  text-align: right;
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.85rem;
+  box-shadow: var(--shadow);
 }
 
 .stat-label {
   display: block;
   font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
-  margin-bottom: 0.15rem;
+  letter-spacing: 0.04em;
 }
 
 .stat-value {
-  font-size: 1.1rem;
-  color: var(--accent);
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
 }
 
-/* ---- SECTIONS ---- */
+/* ---- CARDS ---- */
 
-h2 {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--text-dim);
-  margin-bottom: 1rem;
-}
-
-section {
+.card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  transition: border-color var(--transition);
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
 }
 
-section:hover {
-  border-color: var(--border-accent);
+h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
 }
 
 .hint {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
   line-height: 1.5;
 }
 
 .hint strong {
-  color: var(--accent);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* ---- BUTTONS ---- */
 
 .btn {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.6rem 1.2rem;
-  border-radius: var(--radius);
+  font-family: 'Rubik', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all var(--transition);
@@ -177,96 +162,108 @@ section:hover {
 }
 
 .btn:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: var(--bg);
-  border-color: var(--accent);
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #7ef5e0;
-  box-shadow: 0 0 20px var(--accent-glow);
+  background: var(--primary-hover);
+  box-shadow: 0 2px 8px hsla(217, 85%, 56%, 0.3);
 }
 
-.btn-secondary {
+.btn-outline {
   background: transparent;
-  color: var(--text);
-  border-color: var(--border-accent);
+  color: var(--text-secondary);
+  border-color: var(--border);
 }
 
-.btn-secondary:hover:not(:disabled) {
+.btn-outline:hover:not(:disabled) {
   border-color: var(--text-muted);
-  background: var(--bg-card-hover);
+  background: var(--bg);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text-dim);
+  color: var(--text-muted);
   border-color: transparent;
-  font-size: 0.65rem;
-  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
 }
 
 .btn-ghost:hover {
   color: var(--error);
+  background: hsl(0, 84%, 97%);
 }
 
-.btn-large {
+.btn-block {
   width: 100%;
-  padding: 0.85rem;
-  font-size: 0.8rem;
+  padding: 0.7rem;
+  font-size: 0.85rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 /* ---- WALLET ---- */
 
-.wallet-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-#import-form {
+.input-row {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
 
-#import-form input {
+.input-row input {
   flex: 1;
 }
 
-.wallet-info {
+.info-grid {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
 
-.wallet-row {
+.info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--bg);
   gap: 1rem;
 }
 
-.wallet-row .label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.wallet-row .mono {
-  font-size: 0.8rem;
+.info-value {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mono {
+  font-family: 'Rubik', monospace;
+  letter-spacing: 0.02em;
 }
 
 /* ---- FORMS ---- */
@@ -277,38 +274,36 @@ section:hover {
 
 label {
   display: block;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--text-muted);
-  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
 }
 
 input[type="text"],
 input[type="password"],
 textarea {
   width: 100%;
-  font-family: var(--font-body);
+  font-family: 'Rubik', sans-serif;
   font-size: 0.85rem;
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 input:focus,
 textarea:focus {
-  border-color: var(--accent-dim);
-  box-shadow: 0 0 0 2px var(--accent-glow);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px hsla(217, 85%, 56%, 0.12);
 }
 
 textarea {
@@ -320,90 +315,92 @@ textarea {
 
 .result-card {
   background: var(--bg);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  animation: fadeSlideIn 400ms ease both;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.1rem;
+  margin-top: 1rem;
+  animation: fadeSlideIn 300ms ease both;
 }
 
 .result-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .result-grade {
-  font-size: 1.3rem;
-  letter-spacing: 0.1em;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  color: hsl(45, 100%, 50%);
 }
 
 .result-reward {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--success);
 }
 
 .result-reasoning {
   font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.55;
+  color: var(--text-secondary);
+  line-height: 1.5;
   font-style: italic;
 }
 
 .result-status {
   font-size: 0.7rem;
   color: var(--success);
-  margin-top: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  margin-top: 0.6rem;
+  font-weight: 500;
 }
 
 /* ---- SPINNER ---- */
 
-.spinner-wrap {
+.spinner-row {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 0;
+  padding: 1rem 0 0;
 }
 
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid var(--border-accent);
-  border-top-color: var(--accent);
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
 #tx-status-text {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 /* ---- FOOTER ---- */
 
 footer {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
   text-align: center;
 }
 
 footer p {
-  font-size: 0.65rem;
-  color: var(--text-dim);
+  font-size: 0.7rem;
+  color: var(--text-muted);
 }
 
 footer a {
-  color: var(--text-muted);
+  color: var(--primary);
   text-decoration: none;
   transition: color var(--transition);
 }
 
 footer a:hover {
-  color: var(--accent);
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
 /* ---- UTILITY ---- */
@@ -413,7 +410,7 @@ footer a:hover {
 }
 
 a {
-  color: var(--accent);
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -430,7 +427,7 @@ a:hover {
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -438,13 +435,13 @@ a:hover {
   }
 }
 
-/* Stagger-in for sections */
-section {
-  animation: fadeSlideIn 500ms ease both;
+.card {
+  animation: fadeSlideIn 400ms ease both;
 }
 
-section:nth-child(1) { animation-delay: 50ms; }
-section:nth-child(2) { animation-delay: 150ms; }
+.card:nth-child(2) {
+  animation-delay: 80ms;
+}
 
 /* ---- RESPONSIVE ---- */
 
@@ -458,20 +455,19 @@ section:nth-child(2) { animation-delay: 150ms; }
 
   .header-stats {
     width: 100%;
-    justify-content: space-between;
   }
 
-  .stat {
-    text-align: left;
+  .stat-card {
+    flex: 1;
   }
 
-  .wallet-row {
+  .info-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.2rem;
+    gap: 0.15rem;
   }
 
-  #import-form {
+  .input-row {
     flex-direction: column;
   }
 }

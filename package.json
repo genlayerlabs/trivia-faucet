@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "ethers": "^6.16.0",
     "genlayer-js": "^0.21.3"
   },
   "devDependencies": {

@@ -9,7 +9,8 @@ import {
 } from './wallet';
 import {
   setAccount,
-  getBalance,
+  getFaucetBalance,
+  getWalletBalance,
   getTotalDistributed,
   getUserClaims,
   answerTrivia,
@@ -25,6 +26,7 @@ const totalDistEl = $('total-distributed');
 const walletDisconnected = $('wallet-disconnected');
 const walletConnected = $('wallet-connected');
 const walletAddressEl = $('wallet-address');
+const walletBalanceEl = $('wallet-balance');
 const userClaimsEl = $('user-claims');
 const importFormEl = $('import-form');
 const inputPK = $<HTMLInputElement>('input-private-key');
@@ -50,15 +52,12 @@ let currentAccount: Account | null = null;
 // ---- Init ----
 
 async function init() {
-  // Try loading saved wallet
   const saved = loadWallet();
   if (saved) connectWallet(saved);
 
-  // Load contract stats
   refreshStats();
   setInterval(refreshStats, 30_000);
 
-  // Wire up events
   $('btn-generate').addEventListener('click', () => {
     const account = generateWallet();
     connectWallet(account);
@@ -101,7 +100,7 @@ function connectWallet(account: Account) {
   walletAddressEl.textContent = shortenAddress(account.address);
   btnSubmit.disabled = false;
 
-  refreshUserClaims();
+  refreshWalletData();
 }
 
 function disconnectUI() {
@@ -111,6 +110,7 @@ function disconnectUI() {
   walletConnected.classList.add('hidden');
   walletDisconnected.classList.remove('hidden');
   btnSubmit.disabled = true;
+  walletBalanceEl.textContent = '—';
   userClaimsEl.textContent = '—';
 }
 
@@ -118,7 +118,10 @@ function disconnectUI() {
 
 async function refreshStats() {
   try {
-    const [balance, total] = await Promise.all([getBalance(), getTotalDistributed()]);
+    const [balance, total] = await Promise.all([
+      getFaucetBalance(),
+      getTotalDistributed(),
+    ]);
     faucetBalanceEl.textContent = balance;
     totalDistEl.textContent = total;
   } catch (e) {
@@ -126,13 +129,18 @@ async function refreshStats() {
   }
 }
 
-async function refreshUserClaims() {
+async function refreshWalletData() {
   if (!currentAccount) return;
   try {
-    const claims = await getUserClaims(currentAccount.address);
+    const [balance, claims] = await Promise.all([
+      getWalletBalance(currentAccount.address),
+      getUserClaims(currentAccount.address),
+    ]);
+    walletBalanceEl.textContent = balance;
     userClaimsEl.textContent = claims;
   } catch (e) {
-    console.error('Failed to fetch user claims:', e);
+    console.error('Failed to fetch wallet data:', e);
+    walletBalanceEl.textContent = '0 GEN';
     userClaimsEl.textContent = '0 GEN';
   }
 }
@@ -146,7 +154,6 @@ async function handleSubmit(e: Event) {
   const answer = inputAnswer.value.trim();
   if (!question || !answer) return;
 
-  // Show loading state
   btnSubmit.disabled = true;
   resultArea.classList.add('hidden');
   txPending.classList.remove('hidden');
@@ -156,7 +163,6 @@ async function handleSubmit(e: Event) {
       txStatusText.textContent = msg;
     });
 
-    // Show result
     txPending.classList.add('hidden');
     resultArea.classList.remove('hidden');
 
@@ -165,9 +171,8 @@ async function handleSubmit(e: Event) {
     resultReasoning.textContent = result.reasoning;
     resultStatus.textContent = 'Transaction finalized';
 
-    // Refresh data
     refreshStats();
-    refreshUserClaims();
+    refreshWalletData();
   } catch (err: any) {
     txPending.classList.add('hidden');
     resultArea.classList.remove('hidden');
