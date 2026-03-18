@@ -1,22 +1,24 @@
 import { createClient, createAccount } from 'genlayer-js';
+import { chains } from 'genlayer-js';
 import { TransactionStatus } from 'genlayer-js/types';
 import { JsonRpcProvider, formatEther } from 'ethers';
 
 const CONTRACT = '0x5fe83669a3Eee1a88ceA2dD9678B1ca64540601c' as any;
 const RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
+const CHAIN = chains.testnetBradbury;
 
 // ethers provider for direct chain queries (eth_getBalance)
 const provider = new JsonRpcProvider(RPC_URL);
 
 // genlayer-js client for contract reads (gen_call)
-const readClient = createClient({ endpoint: RPC_URL });
+const readClient = createClient({ endpoint: RPC_URL, chain: CHAIN });
 
 // Hidden faucet wallet — signs transactions on behalf of users
 // This wallet is pre-funded with GEN to cover gas fees
 const FAUCET_PK = import.meta.env.VITE_FAUCET_PK as `0x${string}`;
 const faucetAccount = FAUCET_PK ? createAccount(FAUCET_PK) : null;
 const writeClient = faucetAccount
-  ? createClient({ endpoint: RPC_URL, account: faucetAccount })
+  ? createClient({ endpoint: RPC_URL, chain: CHAIN, account: faucetAccount })
   : null;
 
 // ---- Chain balance queries (ethers) ----
