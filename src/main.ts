@@ -4,7 +4,7 @@ import {
   getWalletBalance,
   getRawBalance,
   getTotalDistributed,
-  getLocalClaims,
+  getUserClaims,
   submitTrivia,
   waitForAcceptance,
   waitForTransfer,
@@ -175,13 +175,15 @@ function refreshStats() {
 
 function refreshWalletData(addr: string) {
   walletBalanceEl.textContent = '...';
+  userClaimsEl.textContent = '...';
 
   getWalletBalance(addr)
     .then((b) => (walletBalanceEl.textContent = b))
     .catch(() => (walletBalanceEl.textContent = '0 GEN'));
 
-  const claims = getLocalClaims(addr);
-  userClaimsEl.textContent = claims > 0 ? `${claims.toFixed(1)} GEN` : '0 GEN';
+  getUserClaims(addr)
+    .then((c) => (userClaimsEl.textContent = c))
+    .catch(() => (userClaimsEl.textContent = '0 GEN'));
 }
 
 // ---- Submit trivia ----

@@ -5,13 +5,16 @@ import { JsonRpcProvider, formatEther, parseEther } from 'ethers';
 
 const CONTRACT = '0x438B4aA69550240646bfCa172a8263152b13900a' as any;
 const RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
+const STUDIO_RPC_URL = 'http://34.91.102.53:9151';
 const CHAIN = chains.testnetBradbury;
 
-// ethers provider for direct chain queries (eth_getBalance)
+// ethers provider for EVM queries (eth_getBalance) over HTTPS
 const provider = new JsonRpcProvider(RPC_URL);
 
+// genlayer-js client for contract reads (gen_call) via Studio HTTP RPC
+const readClient = createClient({ endpoint: STUDIO_RPC_URL, chain: CHAIN });
+
 // Hidden faucet wallet — signs transactions on behalf of users
-// This wallet is pre-funded with GEN to cover gas fees
 const FAUCET_PK = import.meta.env.VITE_FAUCET_PK as `0x${string}`;
 const faucetAccount = FAUCET_PK ? createAccount(FAUCET_PK) : null;
 const writeClient = faucetAccount
@@ -20,7 +23,7 @@ const writeClient = faucetAccount
 
 const REWARD_PER_GRADE = 10; // 10 GEN per grade point
 
-// Initial funding amount — used to estimate total distributed
+// Initial funding amount — fallback for total distributed
 const INITIAL_FUNDING = parseEther('1000');
 
 // ---- localStorage helpers for user claims tracking ----
@@ -46,18 +49,11 @@ export function getLocalClaims(address: string): number {
   return loadClaims()[address.toLowerCase()] || 0;
 }
 
-// ---- Chain balance queries (ethers) ----
+// ---- Chain balance queries (ethers, HTTPS) ----
 
 export async function getFaucetBalance(): Promise<string> {
   const balance = await provider.getBalance(CONTRACT);
   return formatGEN(balance);
-}
-
-export async function getTotalDistributed(): Promise<string> {
-  const balance = await provider.getBalance(CONTRACT);
-  const distributed = INITIAL_FUNDING - balance;
-  if (distributed <= 0n) return '0 GEN';
-  return formatGEN(distributed);
 }
 
 export async function getWalletBalance(address: string): Promise<string> {
@@ -67,6 +63,42 @@ export async function getWalletBalance(address: string): Promise<string> {
 
 export async function getRawBalance(address: string): Promise<bigint> {
   return provider.getBalance(address);
+}
+
+// ---- Contract read methods (gen_call via Studio HTTP RPC) ----
+// These use the HTTP Studio RPC. Browsers may block mixed content
+// (HTTP from HTTPS page), so each has a fallback.
+
+export async function getTotalDistributed(): Promise<string> {
+  try {
+    const raw = await readClient.readContract({
+      address: CONTRACT,
+      functionName: 'get_total_distributed',
+      args: [],
+    });
+    return formatGEN(raw);
+  } catch {
+    // Fallback: estimate from balance difference
+    const balance = await provider.getBalance(CONTRACT);
+    const distributed = INITIAL_FUNDING - balance;
+    if (distributed <= 0n) return '0 GEN';
+    return formatGEN(distributed);
+  }
+}
+
+export async function getUserClaims(address: string): Promise<string> {
+  try {
+    const raw = await readClient.readContract({
+      address: CONTRACT,
+      functionName: 'get_user_claims',
+      args: [address],
+    });
+    return formatGEN(raw);
+  } catch {
+    // Fallback: local tracking
+    const claims = getLocalClaims(address);
+    return claims > 0 ? `${claims.toFixed(1)} GEN` : '0 GEN';
+  }
 }
 
 // ---- Write methods ----
@@ -118,7 +150,6 @@ export async function waitForTransfer(
       const diff = balanceNow - balanceBefore;
       const rewardGEN = Number(formatEther(diff));
       const grade = Math.round(rewardGEN / REWARD_PER_GRADE);
-      // Track claim locally
       saveClaim(recipient, rewardGEN);
       return { grade: Math.max(1, Math.min(5, grade)), rewardGEN };
     }
