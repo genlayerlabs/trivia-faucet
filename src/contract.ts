@@ -3,7 +3,7 @@ import { chains } from 'genlayer-js';
 import { TransactionStatus } from 'genlayer-js/types';
 import { JsonRpcProvider, formatEther } from 'ethers';
 
-const CONTRACT = '0x5fe83669a3Eee1a88ceA2dD9678B1ca64540601c' as any;
+const CONTRACT = '0x438B4aA69550240646bfCa172a8263152b13900a' as any;
 const RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
 const CHAIN = chains.testnetBradbury;
 
