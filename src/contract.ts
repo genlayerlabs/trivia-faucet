@@ -1,7 +1,7 @@
 import { createClient, createAccount } from 'genlayer-js';
 import { chains } from 'genlayer-js';
 import { TransactionStatus } from 'genlayer-js/types';
-import { JsonRpcProvider, formatEther } from 'ethers';
+import { JsonRpcProvider, formatEther, parseEther } from 'ethers';
 
 const CONTRACT = '0x438B4aA69550240646bfCa172a8263152b13900a' as any;
 const RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
@@ -9,9 +9,6 @@ const CHAIN = chains.testnetBradbury;
 
 // ethers provider for direct chain queries (eth_getBalance)
 const provider = new JsonRpcProvider(RPC_URL);
-
-// genlayer-js client for contract reads (gen_call)
-const readClient = createClient({ endpoint: RPC_URL, chain: CHAIN });
 
 // Hidden faucet wallet — signs transactions on behalf of users
 // This wallet is pre-funded with GEN to cover gas fees
@@ -23,11 +20,44 @@ const writeClient = faucetAccount
 
 const REWARD_PER_GRADE = 10; // 10 GEN per grade point
 
+// Initial funding amount — used to estimate total distributed
+const INITIAL_FUNDING = parseEther('1000');
+
+// ---- localStorage helpers for user claims tracking ----
+
+const CLAIMS_KEY = 'trivia-faucet-claims';
+
+function loadClaims(): Record<string, number> {
+  try {
+    return JSON.parse(localStorage.getItem(CLAIMS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveClaim(address: string, rewardGEN: number): void {
+  const claims = loadClaims();
+  const addr = address.toLowerCase();
+  claims[addr] = (claims[addr] || 0) + rewardGEN;
+  localStorage.setItem(CLAIMS_KEY, JSON.stringify(claims));
+}
+
+export function getLocalClaims(address: string): number {
+  return loadClaims()[address.toLowerCase()] || 0;
+}
+
 // ---- Chain balance queries (ethers) ----
 
 export async function getFaucetBalance(): Promise<string> {
   const balance = await provider.getBalance(CONTRACT);
   return formatGEN(balance);
+}
+
+export async function getTotalDistributed(): Promise<string> {
+  const balance = await provider.getBalance(CONTRACT);
+  const distributed = INITIAL_FUNDING - balance;
+  if (distributed <= 0n) return '0 GEN';
+  return formatGEN(distributed);
 }
 
 export async function getWalletBalance(address: string): Promise<string> {
@@ -37,26 +67,6 @@ export async function getWalletBalance(address: string): Promise<string> {
 
 export async function getRawBalance(address: string): Promise<bigint> {
   return provider.getBalance(address);
-}
-
-// ---- Contract read methods (genlayer-js) ----
-
-export async function getTotalDistributed(): Promise<string> {
-  const raw = await readClient.readContract({
-    address: CONTRACT,
-    functionName: 'get_total_distributed',
-    args: [],
-  });
-  return formatGEN(raw);
-}
-
-export async function getUserClaims(address: string): Promise<string> {
-  const raw = await readClient.readContract({
-    address: CONTRACT,
-    functionName: 'get_user_claims',
-    args: [address],
-  });
-  return formatGEN(raw);
 }
 
 // ---- Write methods ----
@@ -108,6 +118,8 @@ export async function waitForTransfer(
       const diff = balanceNow - balanceBefore;
       const rewardGEN = Number(formatEther(diff));
       const grade = Math.round(rewardGEN / REWARD_PER_GRADE);
+      // Track claim locally
+      saveClaim(recipient, rewardGEN);
       return { grade: Math.max(1, Math.min(5, grade)), rewardGEN };
     }
   }
