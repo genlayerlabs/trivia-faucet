@@ -2,7 +2,7 @@ import { createClient, createAccount } from 'genlayer-js';
 import { TransactionStatus } from 'genlayer-js/types';
 import { JsonRpcProvider, formatEther } from 'ethers';
 
-const CONTRACT = '0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F' as any;
+const CONTRACT = '0x3F145E162347aE3eb40763019bE666CcFCAD9625' as any;
 const RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
 
 // ethers provider for direct chain queries (eth_getBalance)
