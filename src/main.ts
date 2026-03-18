@@ -117,32 +117,26 @@ function disconnectUI() {
 // ---- Data refresh ----
 
 async function refreshStats() {
-  try {
-    const [balance, total] = await Promise.all([
-      getFaucetBalance(),
-      getTotalDistributed(),
-    ]);
-    faucetBalanceEl.textContent = balance;
-    totalDistEl.textContent = total;
-  } catch (e) {
-    console.error('Failed to refresh stats:', e);
-  }
+  // Fetch independently — ethers calls work, genlayer-js gen_call may not
+  getFaucetBalance()
+    .then((b) => (faucetBalanceEl.textContent = b))
+    .catch((e) => console.error('Failed to fetch faucet balance:', e));
+
+  getTotalDistributed()
+    .then((t) => (totalDistEl.textContent = t))
+    .catch((e) => console.error('Failed to fetch total distributed:', e));
 }
 
 async function refreshWalletData() {
   if (!currentAccount) return;
-  try {
-    const [balance, claims] = await Promise.all([
-      getWalletBalance(currentAccount.address),
-      getUserClaims(currentAccount.address),
-    ]);
-    walletBalanceEl.textContent = balance;
-    userClaimsEl.textContent = claims;
-  } catch (e) {
-    console.error('Failed to fetch wallet data:', e);
-    walletBalanceEl.textContent = '0 GEN';
-    userClaimsEl.textContent = '0 GEN';
-  }
+
+  getWalletBalance(currentAccount.address)
+    .then((b) => (walletBalanceEl.textContent = b))
+    .catch(() => (walletBalanceEl.textContent = '0 GEN'));
+
+  getUserClaims(currentAccount.address)
+    .then((c) => (userClaimsEl.textContent = c))
+    .catch(() => (userClaimsEl.textContent = '—'));
 }
 
 // ---- Submit trivia ----
