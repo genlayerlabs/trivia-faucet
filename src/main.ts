@@ -1,19 +1,9 @@
 import './style.css';
 import {
-  loadWallet,
-  generateWallet,
-  importWallet,
-  disconnectWallet,
-  shortenAddress,
-  type Account,
-} from './wallet';
-import {
-  setAccount,
   getFaucetBalance,
   getWalletBalance,
   getTotalDistributed,
   getUserClaims,
-  answerTrivia,
 } from './contract';
 
 // ---- DOM refs ----
@@ -23,101 +13,81 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const faucetBalanceEl = $('faucet-balance');
 const totalDistEl = $('total-distributed');
 
-const walletDisconnected = $('wallet-disconnected');
-const walletConnected = $('wallet-connected');
+const inputAddress = $<HTMLInputElement>('input-address');
+const btnLookup = $<HTMLButtonElement>('btn-lookup');
+const addressError = $('address-error');
+const walletInfo = $('wallet-info');
 const walletAddressEl = $('wallet-address');
 const walletBalanceEl = $('wallet-balance');
 const userClaimsEl = $('user-claims');
-const importFormEl = $('import-form');
-const inputPK = $<HTMLInputElement>('input-private-key');
 
-const triviaForm = $<HTMLFormElement>('trivia-form');
-const inputQuestion = $<HTMLInputElement>('input-question');
-const inputAnswer = $<HTMLTextAreaElement>('input-answer');
-const btnSubmit = $<HTMLButtonElement>('btn-submit');
+// ---- Address validation ----
 
-const resultArea = $('result-area');
-const resultGrade = $('result-grade');
-const resultReward = $('result-reward');
-const resultReasoning = $('result-reasoning');
-const resultStatus = $('result-status');
+const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
-const txPending = $('tx-pending');
-const txStatusText = $('tx-status-text');
+function isValidAddress(addr: string): boolean {
+  return ADDRESS_RE.test(addr);
+}
+
+function shortenAddress(addr: string): string {
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
 
 // ---- State ----
 
-let currentAccount: Account | null = null;
+let currentAddress: string | null = localStorage.getItem('trivia-faucet-addr');
 
 // ---- Init ----
 
-async function init() {
-  const saved = loadWallet();
-  if (saved) connectWallet(saved);
+function init() {
+  if (currentAddress && isValidAddress(currentAddress)) {
+    showWallet(currentAddress);
+  }
 
   refreshStats();
   setInterval(refreshStats, 30_000);
 
-  $('btn-generate').addEventListener('click', () => {
-    const account = generateWallet();
-    connectWallet(account);
+  btnLookup.addEventListener('click', handleLookup);
+  inputAddress.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLookup();
   });
 
-  $('btn-import').addEventListener('click', () => {
-    importFormEl.classList.toggle('hidden');
-    inputPK.focus();
+  $('btn-clear').addEventListener('click', () => {
+    currentAddress = null;
+    localStorage.removeItem('trivia-faucet-addr');
+    walletInfo.classList.add('hidden');
+    inputAddress.value = '';
+    addressError.classList.add('hidden');
   });
-
-  $('btn-import-confirm').addEventListener('click', () => {
-    const pk = inputPK.value.trim();
-    if (!pk) return;
-    try {
-      const account = importWallet(pk);
-      connectWallet(account);
-      importFormEl.classList.add('hidden');
-      inputPK.value = '';
-    } catch (e) {
-      alert('Invalid private key. Please check and try again.');
-    }
-  });
-
-  $('btn-disconnect').addEventListener('click', () => {
-    disconnectWallet();
-    disconnectUI();
-  });
-
-  triviaForm.addEventListener('submit', handleSubmit);
 }
 
-// ---- Wallet UI ----
+function handleLookup() {
+  const addr = inputAddress.value.trim();
+  addressError.classList.add('hidden');
 
-function connectWallet(account: Account) {
-  currentAccount = account;
-  setAccount(account);
+  if (!addr) return;
 
-  walletDisconnected.classList.add('hidden');
-  walletConnected.classList.remove('hidden');
-  walletAddressEl.textContent = shortenAddress(account.address);
-  btnSubmit.disabled = false;
+  if (!isValidAddress(addr)) {
+    addressError.textContent = 'Invalid address. Must be 0x followed by 40 hex characters.';
+    addressError.classList.remove('hidden');
+    return;
+  }
 
-  refreshWalletData();
+  currentAddress = addr;
+  localStorage.setItem('trivia-faucet-addr', addr);
+  showWallet(addr);
 }
 
-function disconnectUI() {
-  currentAccount = null;
-  setAccount(null);
-
-  walletConnected.classList.add('hidden');
-  walletDisconnected.classList.remove('hidden');
-  btnSubmit.disabled = true;
-  walletBalanceEl.textContent = '—';
-  userClaimsEl.textContent = '—';
+function showWallet(addr: string) {
+  inputAddress.value = addr;
+  walletAddressEl.textContent = shortenAddress(addr);
+  walletInfo.classList.remove('hidden');
+  refreshWalletData(addr);
 }
 
 // ---- Data refresh ----
 
-async function refreshStats() {
-  // Fetch independently — ethers calls work, genlayer-js gen_call may not
+function refreshStats() {
   getFaucetBalance()
     .then((b) => (faucetBalanceEl.textContent = b))
     .catch((e) => console.error('Failed to fetch faucet balance:', e));
@@ -127,58 +97,17 @@ async function refreshStats() {
     .catch((e) => console.error('Failed to fetch total distributed:', e));
 }
 
-async function refreshWalletData() {
-  if (!currentAccount) return;
+function refreshWalletData(addr: string) {
+  walletBalanceEl.textContent = '...';
+  userClaimsEl.textContent = '...';
 
-  getWalletBalance(currentAccount.address)
+  getWalletBalance(addr)
     .then((b) => (walletBalanceEl.textContent = b))
     .catch(() => (walletBalanceEl.textContent = '0 GEN'));
 
-  getUserClaims(currentAccount.address)
+  getUserClaims(addr)
     .then((c) => (userClaimsEl.textContent = c))
     .catch(() => (userClaimsEl.textContent = '—'));
-}
-
-// ---- Submit trivia ----
-
-async function handleSubmit(e: Event) {
-  e.preventDefault();
-
-  const question = inputQuestion.value.trim();
-  const answer = inputAnswer.value.trim();
-  if (!question || !answer) return;
-
-  btnSubmit.disabled = true;
-  resultArea.classList.add('hidden');
-  txPending.classList.remove('hidden');
-
-  try {
-    const result = await answerTrivia(question, answer, (msg) => {
-      txStatusText.textContent = msg;
-    });
-
-    txPending.classList.add('hidden');
-    resultArea.classList.remove('hidden');
-
-    resultGrade.textContent = '★'.repeat(result.grade) + '☆'.repeat(5 - result.grade);
-    resultReward.textContent = `+${result.reward}`;
-    resultReasoning.textContent = result.reasoning;
-    resultStatus.textContent = 'Transaction finalized';
-
-    refreshStats();
-    refreshWalletData();
-  } catch (err: any) {
-    txPending.classList.add('hidden');
-    resultArea.classList.remove('hidden');
-
-    resultGrade.textContent = '✕';
-    resultReward.textContent = '';
-    resultReasoning.textContent = err?.message || 'Transaction failed. Please try again.';
-    resultStatus.textContent = '';
-    resultStatus.style.color = 'var(--error)';
-  } finally {
-    btnSubmit.disabled = !currentAccount;
-  }
 }
 
 // ---- Start ----

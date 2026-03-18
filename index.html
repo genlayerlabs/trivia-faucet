@@ -34,20 +34,13 @@
       <main>
         <section class="card" id="wallet-section">
           <h2>Wallet</h2>
-          <div id="wallet-disconnected">
-            <p class="hint">Generate a new wallet or import an existing private key to begin.</p>
-            <div class="btn-group">
-              <button id="btn-generate" class="btn btn-primary">Generate New Wallet</button>
-              <button id="btn-import" class="btn btn-outline">Import Key</button>
-            </div>
-            <div id="import-form" class="hidden">
-              <div class="input-row">
-                <input type="password" id="input-private-key" placeholder="0x..." autocomplete="off" />
-                <button id="btn-import-confirm" class="btn btn-primary">Import</button>
-              </div>
-            </div>
+          <p class="hint">Paste your wallet address to check your GEN balance and trivia earnings.</p>
+          <div class="input-row">
+            <input type="text" id="input-address" placeholder="0x..." spellcheck="false" autocomplete="off" />
+            <button id="btn-lookup" class="btn btn-primary">Lookup</button>
           </div>
-          <div id="wallet-connected" class="hidden">
+          <p id="address-error" class="error-text hidden"></p>
+          <div id="wallet-info" class="hidden">
             <div class="info-grid">
               <div class="info-row">
                 <span class="info-label">Address</span>
@@ -62,7 +55,7 @@
                 <span class="info-value" id="user-claims">—</span>
               </div>
             </div>
-            <button id="btn-disconnect" class="btn btn-ghost">Disconnect</button>
+            <button id="btn-clear" class="btn btn-ghost">Clear</button>
           </div>
         </section>
 
