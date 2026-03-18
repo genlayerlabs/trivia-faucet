@@ -83,7 +83,7 @@ export async function answerTrivia(
   onStatus(`Waiting for consensus... <a href="${EXPLORER_URL}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 10)}...${hash.slice(-6)}</a>`);
   const receipt = await writeClient.waitForTransactionReceipt({
     hash,
-    status: TransactionStatus.FINALIZED,
+    status: TransactionStatus.ACCEPTED,
     retries: 120,
     interval: 5000,
   });
