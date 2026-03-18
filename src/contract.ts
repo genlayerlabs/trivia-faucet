@@ -4,30 +4,17 @@ import type { Account } from './wallet';
 
 const CONTRACT = '0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F' as any;
 
-const BRADBURY_CHAIN = {
-  id: 4221,
-  name: 'GenLayer Bradbury Testnet',
-  rpcUrls: {
-    default: { http: ['https://jsonrpc-bradbury.genlayer.com'] as const },
-  },
-  nativeCurrency: { name: 'GEN Token', symbol: 'GEN', decimals: 18 },
-  blockExplorers: {
-    default: {
-      name: 'GenLayer Explorer',
-      url: 'https://explorer-bradbury.genlayer.com',
-    },
-  },
-} as const;
+const RPC_ENDPOINT = 'http://34.91.102.53:9151';
 
 // Read-only client (no account needed)
-const readClient = createClient({ chain: BRADBURY_CHAIN });
+const readClient = createClient({ endpoint: RPC_ENDPOINT });
 
 // Authenticated client (set when wallet connects)
 let writeClient: ReturnType<typeof createClient> | null = null;
 
 export function setAccount(account: Account | null) {
   if (account) {
-    writeClient = createClient({ chain: BRADBURY_CHAIN, account });
+    writeClient = createClient({ endpoint: RPC_ENDPOINT, account });
   } else {
     writeClient = null;
   }
