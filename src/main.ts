@@ -6,6 +6,7 @@ import {
   getUserClaims,
   answerTrivia,
   isWriteReady,
+  EXPLORER_URL,
 } from './contract';
 
 // ---- DOM refs ----
@@ -151,7 +152,7 @@ async function handleSubmit(e: Event) {
 
   try {
     const result = await answerTrivia(question, answer, currentAddress, (msg) => {
-      txStatusText.textContent = msg;
+      txStatusText.innerHTML = msg;
     });
 
     txPending.classList.add('hidden');
@@ -160,7 +161,7 @@ async function handleSubmit(e: Event) {
     resultGrade.textContent = '\u2605'.repeat(result.grade) + '\u2606'.repeat(5 - result.grade);
     resultReward.textContent = `+${result.reward}`;
     resultReasoning.textContent = result.reasoning;
-    resultStatus.textContent = 'Transaction finalized';
+    resultStatus.innerHTML = `Transaction finalized — <a href="${EXPLORER_URL}/tx/${result.txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
     resultStatus.style.color = '';
 
     refreshStats();

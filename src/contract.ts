@@ -55,10 +55,13 @@ export async function getUserClaims(address: string): Promise<string> {
 
 // ---- Write methods ----
 
+export const EXPLORER_URL = 'https://explorer-bradbury.genlayer.com';
+
 export interface TriviaResult {
   grade: number;
   reasoning: string;
   reward: string;
+  txHash: string;
 }
 
 export async function answerTrivia(
@@ -77,7 +80,7 @@ export async function answerTrivia(
     value: 0n,
   });
 
-  onStatus('Waiting for consensus (this may take a minute)...');
+  onStatus(`Waiting for consensus... <a href="${EXPLORER_URL}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 10)}...${hash.slice(-6)}</a>`);
   const receipt = await writeClient.waitForTransactionReceipt({
     hash,
     status: TransactionStatus.FINALIZED,
@@ -109,6 +112,7 @@ export async function answerTrivia(
     grade,
     reasoning,
     reward: `${rewardGEN} GEN`,
+    txHash: hash,
   };
 }
 
