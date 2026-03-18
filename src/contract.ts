@@ -1,20 +1,19 @@
 import { createClient } from 'genlayer-js';
+import { testnetBradbury } from 'genlayer-js/chains';
 import { TransactionStatus } from 'genlayer-js/types';
 import type { Account } from './wallet';
 
 const CONTRACT = '0x73ee6af5F210d5AC8902B18F53CE23b53eDFC65F' as any;
 
-const RPC_ENDPOINT = 'http://34.91.102.53:9151';
-
 // Read-only client (no account needed)
-const readClient = createClient({ endpoint: RPC_ENDPOINT });
+const readClient = createClient({ chain: testnetBradbury });
 
 // Authenticated client (set when wallet connects)
 let writeClient: ReturnType<typeof createClient> | null = null;
 
 export function setAccount(account: Account | null) {
   if (account) {
-    writeClient = createClient({ endpoint: RPC_ENDPOINT, account });
+    writeClient = createClient({ chain: testnetBradbury, account });
   } else {
     writeClient = null;
   }
