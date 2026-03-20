@@ -152,7 +152,22 @@ export async function submitTrivia(
   throw lastError;
 }
 
-// ---- Wait for consensus acceptance via genlayer-js getTransaction ----
+// ---- Consensus queries via ConsensusData contract (ethers) ----
+
+const CONSENSUS_DATA = '0x85D7bf947A512Fc640C75327A780c90847267697';
+const CONSENSUS_DATA_ABI = [
+  'function getTransactionData(bytes32 txId, uint256 timestamp) view returns (tuple(uint256 currentTimestamp, address sender, address recipient, uint256 initialRotations, uint256 txSlot, uint256 createdTimestamp, uint256 lastVoteTimestamp, bytes32 randomSeed, uint8 result, bytes32 txExecutionHash, bytes txCalldata, bytes eqBlocksOutputs, tuple(uint8 messageType, address recipient, uint256 value, bytes data, bool onAcceptance, uint256 saltNonce)[] messages, uint8 queueType, uint256 queuePosition, address activator, address lastLeader, uint8 status))',
+];
+// Status enum: 0=Pending,1=Proposing,2=Committing,3=LeaderRevealing,4=Revealing,5=Decided,6=Appeal,7=Finalized
+const STATUS_ACCEPTED = 5; // Decided (accepted)
+const STATUS_FINALIZED = 7;
+
+const consensusData = new ethers.Contract(CONSENSUS_DATA, CONSENSUS_DATA_ABI, provider);
+
+async function getTxData(txHash: string) {
+  const ts = Math.round(Date.now() / 1000);
+  return consensusData.getTransactionData(txHash, ts);
+}
 
 export async function waitForAcceptance(
   txId: string,
@@ -161,13 +176,9 @@ export async function waitForAcceptance(
 ): Promise<void> {
   for (let i = 0; i < retries; i++) {
     try {
-      const tx = await glClient.getTransaction({ hash: txId as any });
-      const status = tx?.status ?? tx?.statusName;
-      const s = String(status);
-      // Status 4 = ACCEPTED, 5 = FINALIZED
-      if (s === '4' || s === 'ACCEPTED' || s === '5' || s === 'FINALIZED') {
-        return;
-      }
+      const tx = await getTxData(txId);
+      const status = Number(tx.status);
+      if (status >= STATUS_ACCEPTED) return;
     } catch {
       // tx may not be indexed yet
     }
@@ -180,10 +191,9 @@ export async function getTransactionGrade(
   txHash: string,
   recipient: string,
 ): Promise<{ grade: number; rewardGEN: number }> {
-  const tx = await glClient.getTransaction({ hash: txHash as any });
-  const txAny = tx as any;
-  if (txAny.messages && txAny.messages.length > 0) {
-    const msg = txAny.messages[0];
+  const tx = await getTxData(txHash);
+  if (tx.messages && tx.messages.length > 0) {
+    const msg = tx.messages[0];
     const iface = new ethers.Interface(['function fundWallet(address wallet, uint256 amount)']);
     const decoded = iface.decodeFunctionData('fundWallet', msg.data);
     const amount = decoded[1]; // uint256
@@ -206,9 +216,8 @@ export async function waitForFinalization(
   for (let i = 0; i < maxMinutes; i++) {
     const minutesElapsed = Math.round((Date.now() - startTime) / 60_000);
     try {
-      const tx = await glClient.getTransaction({ hash: txHash as any });
-      const status = String(tx?.status ?? tx?.statusName);
-      if (status === '5' || status === 'FINALIZED') {
+      const tx = await getTxData(txHash);
+      if (Number(tx.status) >= STATUS_FINALIZED) {
         onStatusUpdate(minutesElapsed, true);
         return { finalized: true };
       }
