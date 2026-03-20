@@ -117,27 +117,39 @@ export async function submitTrivia(
 
   const consensusMain = new ethers.Contract(CONSENSUS_MAIN, CONSENSUS_MAIN_ABI, faucetWallet);
 
-  const tx = await consensusMain.addTransaction(
-    faucetWallet.address,
-    CONTRACT,
-    5,  // numOfInitialValidators
-    3,  // maxRotations
-    innerBytes,
-    0,  // validUntil
-    { value: 0 },
-  );
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const tx = await consensusMain.addTransaction(
+        faucetWallet.address,
+        CONTRACT,
+        5,  // numOfInitialValidators
+        3,  // maxRotations
+        innerBytes,
+        0,  // validUntil
+        { value: 0 },
+      );
 
-  const receipt = await tx.wait();
-  if (receipt.status !== 1) throw new Error('Transaction reverted');
+      const receipt = await tx.wait();
+      if (receipt.status !== 1) throw new Error('Transaction reverted');
 
-  // Extract txId from the ConsensusMain log (topics[1] is the txId)
-  for (const log of receipt.logs) {
-    if (log.address.toLowerCase() === CONSENSUS_MAIN.toLowerCase() && log.topics.length >= 2) {
-      return log.topics[1];
+      // Extract txId from the ConsensusMain log (topics[1] is the txId)
+      for (const log of receipt.logs) {
+        if (log.address.toLowerCase() === CONSENSUS_MAIN.toLowerCase() && log.topics.length >= 2) {
+          return log.topics[1];
+        }
+      }
+
+      throw new Error('Could not extract transaction ID from receipt');
+    } catch (err) {
+      lastError = err;
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
     }
   }
 
-  throw new Error('Could not extract transaction ID from receipt');
+  throw lastError;
 }
 
 // ---- Wait for consensus acceptance via genlayer-js getTransaction ----
