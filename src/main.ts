@@ -2,12 +2,12 @@ import './style.css';
 import {
   getFaucetBalance,
   getWalletBalance,
-  getRawBalance,
   getTotalDistributed,
   getUserClaims,
   submitTrivia,
   waitForAcceptance,
-  waitForTransfer,
+  getTransactionGrade,
+  waitForFinalization,
   isWriteReady,
   EXPLORER_URL,
 } from './contract';
@@ -74,7 +74,7 @@ function setStep(
 function resetProgress() {
   setStep(stepSubmit, stepSubmitIcon, stepSubmitText, 'pending', 'Submit transaction');
   setStep(stepConsensus, stepConsensusIcon, stepConsensusText, 'pending', 'Wait for consensus');
-  setStep(stepTransfer, stepTransferIcon, stepTransferText, 'pending', 'Receive GEN transfer');
+  setStep(stepTransfer, stepTransferIcon, stepTransferText, 'pending', 'Await finalization');
   resultArea.classList.add('hidden');
 }
 
@@ -209,7 +209,6 @@ async function handleSubmit(e: Event) {
     // Step 1: Submit transaction
     setStep(stepSubmit, stepSubmitIcon, stepSubmitText, 'active', 'Submitting transaction...');
 
-    const balanceBefore = await getRawBalance(recipient);
     const txHash = await submitTrivia(question, answer, recipient);
 
     const txLink = `<a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">${txHash.slice(0, 10)}...${txHash.slice(-6)}</a>`;
@@ -222,24 +221,39 @@ async function handleSubmit(e: Event) {
 
     setStep(stepConsensus, stepConsensusIcon, stepConsensusText, 'done', 'Transaction accepted by consensus');
 
-    // Step 3: Wait for GEN transfer
-    setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', 'Waiting for GEN transfer...');
+    // Extract grade immediately from accepted transaction
+    const { grade, rewardGEN } = await getTransactionGrade(txHash, recipient);
 
-    const { grade, rewardGEN } = await waitForTransfer(recipient, balanceBefore);
-
-    setStep(stepTransfer, stepTransferIcon, stepTransferText, 'done', `Received ${rewardGEN} GEN`);
-
-    // Show result
+    // Show result card immediately with pending status
     resultArea.classList.remove('hidden');
     resultGrade.textContent = '\u2605'.repeat(grade) + '\u2606'.repeat(5 - grade);
     resultReward.textContent = `+${rewardGEN} GEN`;
-    resultStatus.innerHTML = `<a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
+    resultReward.classList.add('pending');
+    resultStatus.innerHTML = `<span class="finalization-pending">Pending finalization (~30 min)</span> · <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
     resultStatus.style.color = '';
 
     // Load a new question for next round
     currentQuestion = getRandomQuestion();
     questionDisplay.textContent = currentQuestion;
     inputAnswer.value = '';
+
+    // Step 3: Wait for finalization
+    setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', 'Awaiting finalization... <span class="finalization-timer">(0/30 min)</span>');
+
+    const { finalized } = await waitForFinalization(txHash, (minutesElapsed, done) => {
+      if (!done) {
+        setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', `Awaiting finalization... <span class="finalization-timer">(${minutesElapsed}/30 min)</span>`);
+      }
+    });
+
+    if (finalized) {
+      setStep(stepTransfer, stepTransferIcon, stepTransferText, 'done', `Finalized — ${rewardGEN} GEN sent to your wallet`);
+      resultReward.textContent = `+${rewardGEN} GEN`;
+      resultReward.classList.remove('pending');
+      resultStatus.innerHTML = `<span class="finalization-done">Finalized</span> · <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
+    } else {
+      setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', `Still processing — <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">check explorer</a>`);
+    }
 
     refreshStats();
     refreshWalletData(recipient);

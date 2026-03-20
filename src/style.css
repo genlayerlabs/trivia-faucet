@@ -492,6 +492,34 @@ footer a:hover {
   text-decoration: underline;
 }
 
+/* ---- FINALIZATION ---- */
+
+.finalization-timer {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.finalization-pending {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.finalization-done {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.result-reward.pending {
+  color: var(--text-muted);
+}
+
+.result-reward.pending::after {
+  content: ' (pending finalization)';
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
 /* ---- UTILITY ---- */
 
 .hidden {
