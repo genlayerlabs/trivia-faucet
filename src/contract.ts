@@ -5,23 +5,19 @@ import { ethers, formatEther, parseEther } from 'ethers';
 
 const CONTRACT = '0xDF0bb9da188eeA054E9c3B78d4EDD6d16CD57F09';
 const VAULT = '0x7a0C406351E00fA5A04F1B547d3A8bD0a00f0c69';
-const STUDIO_RPC_URL = 'http://34.91.102.53:9151';
-const ZKSYNC_RPC_URL = 'https://zksync-os-testnet-genlayer.zksync.dev';
+const RPC_URL = 'https://rpc-bradbury.genlayer.com';
 const CONSENSUS_MAIN = '0x0112Bf6e83497965A5fdD6Dad1E447a6E004271D';
 const CHAIN = chains.testnetBradbury;
 
-// Studio RPC for gen_call reads + balance queries
-const provider = new ethers.JsonRpcProvider(STUDIO_RPC_URL);
-
-// zkSync HTTPS RPC for sending EVM transactions (Studio RPC reverts on sends)
-const txProvider = new ethers.JsonRpcProvider(ZKSYNC_RPC_URL);
+// HTTPS RPC for balance queries, gen_call reads, and EVM transactions
+const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 // genlayer-js client for gen_call reads + getTransaction polling
-const glClient = createClient({ endpoint: STUDIO_RPC_URL, chain: CHAIN });
+const glClient = createClient({ endpoint: RPC_URL, chain: CHAIN });
 
-// Faucet wallet connected to zkSync RPC for sending transactions
+// Faucet wallet for sending transactions
 const FAUCET_PK = import.meta.env.VITE_FAUCET_PK as string;
-const faucetWallet = FAUCET_PK ? new ethers.Wallet(FAUCET_PK, txProvider) : null;
+const faucetWallet = FAUCET_PK ? new ethers.Wallet(FAUCET_PK, provider) : null;
 
 const REWARD_PER_GRADE = 10;
 const INITIAL_FUNDING = parseEther('1000');
