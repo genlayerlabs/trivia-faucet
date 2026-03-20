@@ -88,7 +88,7 @@ export async function getUserClaims(address: string): Promise<string> {
     const raw = await glClient.readContract({
       address: CONTRACT as any,
       functionName: 'get_user_claims',
-      args: [address],
+      args: [new CalldataAddress(ethers.getBytes(address))],
     });
     return formatGEN(raw);
   } catch {
