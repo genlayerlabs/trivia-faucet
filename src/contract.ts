@@ -217,7 +217,7 @@ export async function waitForFinalization(
     const minutesElapsed = Math.round((Date.now() - startTime) / 60_000);
     try {
       const tx = await getTxData(txHash);
-      if (Number(tx.status) >= STATUS_FINALIZED) {
+      if (Number(tx.status) === STATUS_FINALIZED) {
         onStatusUpdate(minutesElapsed, true);
         return { finalized: true };
       }
