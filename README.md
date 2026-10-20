@@ -21,11 +21,12 @@ claim totals, as payment evidence.
 Deploy with the paired `genlayer-consensus` CON-1042 change. When publishing PRs,
 link this consumer to that PR with a direct `Depends-On` entry.
 
-The live RPC inspection on 2026-10-20 returned chain 4221, but the configured
-ConsensusData did not expose `getStoredTransactionStatus`. The legacy vault also
-lacks `fundingCaller`. This implementation deliberately refuses those old ABIs.
-Do not enable this UI on the historical deployment or reuse the old vault/ghost.
-Complete the consensus compatibility preflight and deploy the paired new contracts.
+Bradbury consensus is already deployed from tag `v0.6-rc-1`. Epoch 2 has not
+started, so the trivia intelligent contract cannot be deployed yet. Wait for
+epoch 2, then deploy and configure the paired new vault/IC using the release's
+verified deployment records and complete the live smoke test before enabling
+submissions. Earlier probes of historical addresses do not establish the state
+of the current deployment. The API compatibility preflight remains required.
 No production contracts or Pages deployment were changed during implementation.
 
 ## Run the admin API
@@ -83,5 +84,5 @@ CONSENSUS_ARTIFACTS=/absolute/path/to/consensus/artifacts npm run test:integrati
 The integration test uses the real vault and service, with consensus progression
 mocked. It verifies concurrent duplicate submissions, current calldata/fee
 forwarding, finalization-only payout, replay protection, and quota enforcement.
-A live Bradbury smoke test is still required after compatible deployment:
+A live Bradbury smoke test is still required after epoch 2 and the new faucet deployment:
 answer → accepted (no GEN yet) → finalized → settled → GEN received.
