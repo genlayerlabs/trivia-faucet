@@ -1,0 +1,27 @@
+{
+  "chainId": 4221,
+  "rpcUrl": "https://rpc-bradbury.genlayer.com",
+  "vault": "REQUIRED_NEW_VAULT",
+  "ghost": "REQUIRED_NEW_FAUCET_GHOST",
+  "consensusMain": "REQUIRED_VERIFIED_CONSENSUS_MAIN",
+  "consensusData": "REQUIRED_VERIFIED_CONSENSUS_DATA",
+  "feeManager": "REQUIRED_VERIFIED_FEE_MANAGER",
+  "messages": "REQUIRED_VERIFIED_MESSAGES",
+  "allowedOrigins": ["https://genlayerlabs.github.io", "http://localhost:5173"],
+  "initialValidators": 5,
+  "maxRotations": 0,
+  "messageGasLimit": "500000",
+  "messageMaxGasPrice": "REQUIRED_LIVE_PRICE_CAP",
+  "feesDistribution": {
+    "leaderTimeunitsAllocation": "REQUIRED_LIVE_ALLOCATION",
+    "validatorTimeunitsAllocation": "REQUIRED_LIVE_ALLOCATION",
+    "appealRounds": 0,
+    "executionBudgetPerRound": "REQUIRED_LIVE_EXECUTION_BUDGET",
+    "executionConsumed": 0,
+    "totalMessageFees": 0,
+    "rotations": [0],
+    "maxPriceGenPerTimeUnit": "REQUIRED_LIVE_PRICE_CAP",
+    "storageFeeMaxGasPrice": "REQUIRED_LIVE_PRICE_CAP",
+    "receiptFeeMaxGasPrice": "REQUIRED_LIVE_PRICE_CAP"
+  }
+}

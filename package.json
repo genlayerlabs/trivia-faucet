@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve:api": "node --env-file=.env.server server/index.mjs",
+    "test": "node --test server/*.test.mjs",
+    "reconcile": "node --env-file=.env.server server/reconcile.mjs",
+    "test:integration": "node --test integration/*.test.mjs"
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3",
