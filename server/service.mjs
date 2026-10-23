@@ -90,6 +90,7 @@ export function createService({ provider, signer, config }) {
       config.consensusData,
       config.feeManager,
       config.messages,
+      config.transactionManager,
     ])
       if ((await provider.getCode(address)) === "0x")
         throw new Error(`No deployed code at ${address}`);
@@ -102,6 +103,7 @@ export function createService({ provider, signer, config }) {
       ["consensus", config.consensusMain],
       ["lifecycle", config.consensusData],
       ["messages", config.messages],
+      ["transactions", config.transactionManager],
     ])
       if (getAddress(await vault[method]()) !== getAddress(expected))
         throw new Error(`Vault ${method} mismatch`);

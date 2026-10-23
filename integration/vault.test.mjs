@@ -54,6 +54,7 @@ test("API admission -> current struct/fees -> finalization -> exactly-once rewar
     consensusData: mock.target,
     feeManager: mock.target,
     messages: mock.target,
+    transactionManager: mock.target,
     initialValidators: 5,
     maxRotations: 0,
     messageGasLimit: "500000",

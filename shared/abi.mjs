@@ -10,6 +10,7 @@ export const VAULT_ABI = [
   "function fundingCaller() view returns(address)",
   "function consensus() view returns(address)",
   "function lifecycle() view returns(address)",
+  "function transactions() view returns(address)",
   "function messages() view returns(address)",
   "function admission(address) view returns(uint256 dailyRemaining,uint256 userPending,uint256 recentGlobal,uint256 globalPending,uint256 retryAt)",
   "function requests(uint256) view returns(address recipient,bytes32 txId,bool settled,uint256 reward)",
@@ -18,6 +19,9 @@ export const VAULT_ABI = [
   "function totalDistributed() view returns(uint256)",
   "function fundWallet(uint256 requestId,address recipient,uint256 amount)",
   "function reconcile(uint256 requestId)",
+  "function cancel(uint256 requestId)",
+  "function retryCredit(address recipient)",
+  "function claimCredit(address destination)",
   "event Submitted(uint256 indexed requestId,bytes32 indexed txId,address indexed recipient)",
   "event Settled(uint256 indexed requestId,address indexed recipient,uint256 reward)",
 ];

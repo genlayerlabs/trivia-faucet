@@ -1,12 +1,12 @@
 {
   "chainId": 4221,
-  "rpcUrl": "https://rpc-bradbury.genlayer.com",
+  "rpcUrl": "https://rpc.testnet-chain.genlayer.com",
   "vault": "REQUIRED_NEW_VAULT",
   "ghost": "REQUIRED_NEW_FAUCET_GHOST",
-  "consensusMain": "REQUIRED_VERIFIED_CONSENSUS_MAIN",
-  "consensusData": "REQUIRED_VERIFIED_CONSENSUS_DATA",
-  "feeManager": "REQUIRED_VERIFIED_FEE_MANAGER",
-  "messages": "REQUIRED_VERIFIED_MESSAGES",
+  "consensusMain": "0x2E2766cbc3E5e61Ce93bBcdCBb3eAcB82082A019",
+  "consensusData": "0xc5FA6f82BEe53598825d6edf7E3e24613082c75B",
+  "feeManager": "0x7678587A847712f2A96082AC07883A88D0fc7245",
+  "messages": "0xD14B0489157FE420555F1e5A6AFBA031E978aCE5",
   "allowedOrigins": ["https://genlayerlabs.github.io", "http://localhost:5173"],
   "initialValidators": 5,
   "maxRotations": 0,
@@ -23,5 +23,6 @@
     "maxPriceGenPerTimeUnit": "REQUIRED_LIVE_PRICE_CAP",
     "storageFeeMaxGasPrice": "REQUIRED_LIVE_PRICE_CAP",
     "receiptFeeMaxGasPrice": "REQUIRED_LIVE_PRICE_CAP"
-  }
+  },
+  "transactionManager": "0xaCe5e4191Bf408957538Caa9493aBB64F63D92c4"
 }

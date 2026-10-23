@@ -21,13 +21,16 @@ claim totals, as payment evidence.
 Deploy with the paired `genlayer-consensus` CON-1042 change. When publishing PRs,
 link this consumer to that PR with a direct `Depends-On` entry.
 
-Bradbury consensus is already deployed from tag `v0.6-rc-1`. Epoch 2 has not
-started, so the trivia intelligent contract cannot be deployed yet. Wait for
-epoch 2, then deploy and configure the paired new vault/IC using the release's
-verified deployment records and complete the live smoke test before enabling
-submissions. Earlier probes of historical addresses do not establish the state
-of the current deployment. The API compatibility preflight remains required.
-No production contracts or Pages deployment were changed during implementation.
+The selected target is the current public Bradbury deployment at **epoch 2**,
+confirmed on 2026-10-23: ConsensusMain
+`0x2E2766cbc3E5e61Ce93bBcdCBb3eAcB82082A019`, RPC
+`https://rpc.testnet-chain.genlayer.com`, chain 4221. Registry/interface preflight
+passed and the former epoch-2 blocker is cleared. The older epoch-12 Orbit book
+in `v0.6-rc-1` is a different instance and must not be used for this rollout.
+Deploy a new vault and IC, fund/configure the admin signer and fee policy, and
+complete the live payout smoke test before enabling submissions. No Bradbury
+faucet deployment has been made. The paired consensus PR includes a verified
+dependency snapshot for preparing a separate rollout book.
 
 ## Run the admin API
 
@@ -63,13 +66,19 @@ Canceled/failed requests can be reconciled with:
 
 ```sh
 npm run reconcile -- 0x<64-hex-character-request-id>
+# Cancel through the vault when consensus permits the current phase:
+npm run cancel -- 0x<64-hex-character-request-id>
 ```
 
 This is an explicit on-chain admin operation. The vault rejects cleanup of live
 work and delayed callbacks. Failed external dispatch can recover its reward from
 the finalized recorded message; terminal work with no payout releases its slot.
 If a recipient rejects native GEN, settlement credits that recipient and releases
-the slot. The recipient calls `vault.claimCredit(destination)` to withdraw it.
+the slot. The recipient calls `vault.claimCredit(destination)` to withdraw it, or anyone
+can call `vault.retryCredit(recipient)` with more gas to pay the original recipient.
+Unused consensus fee refunds belong to the submitting vault; the owner can recycle
+unreserved funds to the admin signer with `withdraw`. Reserve at least 2,500 GEN
+for a full 50-request queue, plus separate admin gas and consensus fees.
 
 ## Validation
 
@@ -84,5 +93,26 @@ CONSENSUS_ARTIFACTS=/absolute/path/to/consensus/artifacts npm run test:integrati
 The integration test uses the real vault and service, with consensus progression
 mocked. It verifies concurrent duplicate submissions, current calldata/fee
 forwarding, finalization-only payout, replay protection, and quota enforcement.
-A live Bradbury smoke test is still required after epoch 2 and the new faucet deployment:
+A live Bradbury smoke test is still required after the new faucet deployment:
 answer → accepted (no GEN yet) → finalized → settled → GEN received.
+
+## Studio validation
+
+The SDK is pinned to `genlayer-js@2.0.0-rc.2`. Run the exact Python source from the
+paired consensus checkout:
+
+```sh
+npm run test:studio -- /absolute/path/to/consensus/intelligent_contracts/trivia_faucet.py
+```
+
+This deploys a disposable Studio devnet contract with an ephemeral sender standing
+in for the vault, waits for finalization, executes a real LLM call, verifies one
+finalization-only external message and checks authorization/input rejections.
+`STUDIO_EVIDENCE_PATH` optionally saves a sanitized report and source hash.
+Studio does not execute arbitrary Solidity callbacks and does not expose complete
+external-call calldata in this receipt. The vault tests and post-deployment
+Bradbury smoke test cover those boundaries.
+
+Wallets, questions and answers are public blockchain data. Do not enter secrets or
+confidential information in the page. Admission uses Orbit block timestamps; the
+service's rate display is informational and the vault enforces the limits.
