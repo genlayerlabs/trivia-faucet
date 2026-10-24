@@ -9,7 +9,7 @@
   "messages": "0xD14B0489157FE420555F1e5A6AFBA031E978aCE5",
   "initialValidators": 5,
   "maxRotations": 0,
-  "messageGasLimit": "500000",
+  "messageGasLimit": "5000000",
   "messageMaxGasPrice": "500000000",
   "feesDistribution": {
     "leaderTimeunitsAllocation": 100,
@@ -25,5 +25,6 @@
   },
   "transactionManager": "0xaCe5e4191Bf408957538Caa9493aBB64F63D92c4",
   "admin": "0x485E1588cf917a5db01018FA32D0BF0C8C5c1fFf",
-  "enabled": false
+  "enabled": false,
+  "deploymentExecutionBudget": "2500000000000000000"
 }

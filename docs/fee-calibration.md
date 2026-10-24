@@ -1,8 +1,8 @@
 # CON-1042 fee measurements — 2026-10-24
 
-The rollout remains disabled. Both Bradbury IC attempts finalized with execution
+The rollout remains disabled. The first two Bradbury IC attempts finalized with execution
 result `FinishedWithError (2)`. Consensus acceptance alone is not successful VM
-execution. The funded vault is unchanged and neither failed ghost is authorized.
+execution. The funded vault is unchanged and none of the failed ghosts is authorized.
 
 ## Deployment through genlayer.js
 
@@ -28,10 +28,17 @@ node --env-file=/path/to/.env scripts/deploy-bradbury.mjs /path/to/trivia_faucet
 # Add --submit only for an intended new attempt; --status reads an existing journal.
 ```
 
-Do not send another attempt merely to change the fee budget. The second attempt
-already reproduced the VM error with the SDK. Diagnose the validator execution
-error first. The public chain RPC lacks `gen_getTransactionData`, with or without
-the Conduit key.
+The owner explicitly requested a third attempt with a much larger execution
+budget. Its consensus ID is
+`0x52684b9d40ef31c4b1d9b9514825f1b8a0347d4b844736cccf03b00323305fdc`
+(EVM `0xab4d092f9a1e6105a009611d4f516e83431c50f06c27b0a9138c91260ce8e85b`).
+All five validators again reported `FinishedWithError (2)` with the 2.5 GEN
+execution allowance. The failed ghost
+`0x173D5c822b013efac111667f5aE7C40f85Acd32f` remains unauthorized.
+The paired consensus evidence file `trivia_bradbury_high_budget.json` records
+its observed lifecycle and fees. Further retries need new diagnostic evidence.
+The public chain RPC lacks `gen_getTransactionData`, with or without the Conduit
+key. The table below records the earlier 0.025 GEN attempt, not the larger retry.
 
 | Quantity                                                 |                  GEN |
 | -------------------------------------------------------- | -------------------: |
@@ -42,7 +49,9 @@ the Conduit key.
 | Returned to sender                                       | 0.024938070250001294 |
 | Bradbury envelope gas cost                               |        0.00006495008 |
 
-The 0.025 GEN SDK budget is conservative, not a measured minimum. Studio's
+The initial 0.025 GEN SDK budget was conservative, not a measured minimum.
+The owner subsequently requested a much larger allocation: the deployment tool
+now explicitly reserves **2.5 GEN**, a 100× increase, with a 3 GEN deposit guard. Studio's
 successful deployment consumed much less; the failed live attempt cannot measure
 the cost of a successful Bradbury deployment. Prices are read live for each quote.
 The constructor emits no messages, so its message budget/allocation list is empty.
@@ -64,8 +73,8 @@ Both `totalMessageFees` and the allocation budget equal their product; the depos
 is the round-zero primary fee plus that budget. Rewards come from the separate
 2,500 GEN vault reserve.
 
-The configured allocation is **500,000 gas at a 500,000,000 wei cap**, reserving
-**0.00025 GEN per answer**. Above-cap price changes fail closed and require a fresh
+The configured allocation is **5,000,000 gas at a 500,000,000 wei cap**, reserving
+**0.0025 GEN per answer**, increased tenfold at the owner’s request. Above-cap price changes fail closed and require a fresh
 operator quote; they do not silently underfund the message. This cap is distinct
 from the smaller current EVM transaction gas price.
 

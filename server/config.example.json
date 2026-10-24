@@ -10,7 +10,7 @@
   "allowedOrigins": ["https://genlayerlabs.github.io", "http://localhost:5173"],
   "initialValidators": 5,
   "maxRotations": 0,
-  "messageGasLimit": "500000",
+  "messageGasLimit": "5000000",
   "messageMaxGasPrice": "REQUIRED_LIVE_PRICE_CAP",
   "feesDistribution": {
     "leaderTimeunitsAllocation": "REQUIRED_LIVE_ALLOCATION",

@@ -63,7 +63,7 @@ test("Browser client admission -> current struct/fees -> finalization -> exactly
     transactionManager: mock.target,
     initialValidators: 5,
     maxRotations: 0,
-    messageGasLimit: "500000",
+    messageGasLimit: "5000000",
     messageMaxGasPrice: "1",
     feesDistribution: {
       leaderTimeunitsAllocation: 1,
@@ -94,7 +94,7 @@ test("Browser client admission -> current struct/fees -> finalization -> exactly
   ]);
   assert.equal(a.txId, b.txId);
   assert.equal(await vault.totalPending(), 1n);
-  assert.equal(await mock.receivedFees(), 501234n);
+  assert.equal(await mock.receivedFees(), 5001234n);
   assert.equal(await mock.lastOnAcceptance(), false);
   assert.equal(await mock.lastCalldata(), encodeAnswer(input));
   // Inspect the actual admitted envelope: reserve equals allocated external gas,

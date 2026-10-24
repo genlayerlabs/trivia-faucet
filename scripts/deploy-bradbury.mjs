@@ -197,15 +197,16 @@ try {
       fees: measured.fees,
     };
     const fees = await client.estimateTransactionFees({
+      executionBudgetPerRound: BigInt(config.deploymentExecutionBudget),
       leaderTimeunitsAllocation: 100n,
       validatorTimeunitsAllocation: 200n,
       appealRounds: 0n,
       rotations: [0n],
       totalMessageFees: 0n,
     });
-    // Retain SDK conservative execution headroom; Studio usage is not a live-chain ceiling.
-    if (fees.feeValue > 2n * 10n ** 18n)
-      throw new Error("Deployment fee exceeds 2 GEN ceiling");
+    // Operator-selected 100x execution allowance; retain a hard deposit ceiling.
+    if (fees.feeValue > 3n * 10n ** 18n)
+      throw new Error("Deployment fee exceeds 3 GEN ceiling");
     record.estimate = fees;
     console.log(
       json({
