@@ -12,8 +12,8 @@
   "messageGasLimit": "5000000",
   "messageMaxGasPrice": "500000000",
   "feesDistribution": {
-    "leaderTimeunitsAllocation": 100,
-    "validatorTimeunitsAllocation": 200,
+    "leaderTimeunitsAllocation": 130,
+    "validatorTimeunitsAllocation": 230,
     "appealRounds": 0,
     "executionBudgetPerRound": "1000000000000000000",
     "executionConsumed": 0,

@@ -64,6 +64,32 @@ Failed ghost: `0x956c7607c3195c813c9E1F7d05b8D674DaccD023`.
 Sanitized full fee/refund evidence is in the paired consensus PR's
 `intelligent_contracts/deployment/trivia_bradbury_sdk_retry.json`.
 
+## Execution time allowance
+
+The operator requested 30 additional seconds. Both deployment and answer
+submissions now use **130 leader time units** and **230 validator time units**,
+up from 100 and 200. The deployment tool reads these fields from the same
+configuration as the browser client instead of keeping separate constants.
+
+The on-chain phase timeouts for the preceding attempt were 100 and 200 seconds;
+current bounds are 30–600 seconds for each phase. The node derives phase deadlines
+in seconds and subtracts its chain-submission buffer from the VM's usable time.
+These allocations are phase allowances, not a guarantee of exactly that much VM
+runtime or a delay before finalization.
+
+The highlighted explorer field `GEN per time unit` is the unit **price**, not a
+runtime allowance. On-chain reads confirmed current and settled locked prices of
+**1 wei per time unit**, below the submitted **2 wei cap**. The explorer's missing
+locked-price display does not establish missing time funding. No network fee-price
+or validator-node settings were changed.
+
+The new SDK retry has consensus ID
+`0xe5963f177605e05766ed0d35eb34ef584871cc1dc8e38e20a05e8003d0e1055a`
+and EVM envelope
+`0x24e2c55fe2086b69dcca4f2210ff07cd689723f249694916b987792333bea135`.
+Its outcome and measured phase allowances are recorded in the paired consensus
+PR's `trivia_bradbury_extra_time.json`.
+
 ## Finalization message allocation
 
 Every admitted answer reserves one external-message allocation targeting the

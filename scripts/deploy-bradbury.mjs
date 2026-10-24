@@ -198,8 +198,12 @@ try {
     };
     const fees = await client.estimateTransactionFees({
       executionBudgetPerRound: BigInt(config.deploymentExecutionBudget),
-      leaderTimeunitsAllocation: 100n,
-      validatorTimeunitsAllocation: 200n,
+      leaderTimeunitsAllocation: BigInt(
+        config.feesDistribution.leaderTimeunitsAllocation,
+      ),
+      validatorTimeunitsAllocation: BigInt(
+        config.feesDistribution.validatorTimeunitsAllocation,
+      ),
       appealRounds: 0n,
       rotations: [0n],
       totalMessageFees: 0n,
