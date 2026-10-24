@@ -1,10 +1,10 @@
 # Trivia Faucet — CON-1042
 
-The page uses a server-side admin service. The service calls the Solidity vault;
-the vault atomically enforces admission and submits the funded consensus call.
-The intelligent contract emits one external `fundWallet(requestId, user, reward)`
-message on finalization. The page displays vault settlement, not speculative IC
-claim totals, as payment evidence.
+The static GitHub Pages site signs directly with the operator-selected faucet
+wallet and calls the Solidity vault. No hosted admin API is required. The vault
+atomically enforces admission and submits the funded consensus call. The
+intelligent contract emits one external `fundWallet(requestId, user, reward)`
+message on finalization. The page displays vault settlement as payment evidence.
 
 ## Limits
 
@@ -16,51 +16,48 @@ claim totals, as payment evidence.
 - Rejected EVM submissions consume no quota. Accepted requests that later fail still
   count toward the daily/rate limits.
 
-## Deployment dependency
+## Deployment and browser signer
 
-Deploy with the paired `genlayer-consensus` CON-1042 change. When publishing PRs,
-link this consumer to that PR with a direct `Depends-On` entry.
+Deploy with the paired `genlayer-consensus` CON-1042 change:
+[consensus PR #1922](https://github.com/genlayerlabs/genlayer-consensus/pull/1922).
+The selected public Bradbury instance is ConsensusMain
+`0x2E2766cbc3E5e61Ce93bBcdCBb3eAcB82082A019`, chain 4221,
+RPC `https://rpc.testnet-chain.genlayer.com`. This is the instance selected at
+epoch 2; it advanced to epoch 3 before rollout. The older Orbit book in
+`v0.6-rc-1` identifies a different deployment and must not be used.
 
-The selected target is the current public Bradbury deployment at **epoch 2**,
-confirmed on 2026-10-23: ConsensusMain
-`0x2E2766cbc3E5e61Ce93bBcdCBb3eAcB82082A019`, RPC
-`https://rpc.testnet-chain.genlayer.com`, chain 4221. Registry/interface preflight
-passed and the former epoch-2 blocker is cleared. The older epoch-12 Orbit book
-in `v0.6-rc-1` is a different instance and must not be used for this rollout.
-Deploy a new vault and IC, fund/configure the admin signer and fee policy, and
-complete the live payout smoke test before enabling submissions. No Bradbury
-faucet deployment has been made. The paired consensus PR includes a verified
-dependency snapshot for preparing a separate rollout book.
+`src/deployment.json` contains public addresses and fee policy. The new vault is
+`0x41604b0d7fA8B4b0F771E94b1cf79384C87cc12f`. The first IC deployment attempt at
+`0xb494DCD35146AeD366872aD6A4f0b9b076070629` reached an accepted **execution error**;
+it is not a working deployment. The vault holds the authorized 2,500 GEN reward
+reserve; the failed ghost is not authorized to request payouts. Submissions remain disabled (`enabled: false`)
+until a successful deployment, vault authorization and live payout test.
 
-## Run the admin API
+The selected browser signer is `0x485E1588cf917a5db01018FA32D0BF0C8C5c1fFf`.
+Set the GitHub repository secret `TRIVIA_FAUCET_PRIVATE_KEY`; the Pages workflow
+passes it to Vite as `VITE_TRIVIA_FAUCET_PRIVATE_KEY`. This deliberately makes the
+signing key available in the downloaded JavaScript, as requested by the operator.
+It is a dedicated low-balance submission wallet, not the vault owner. The owner
+is `0x913C8cA13923BFF9F6459e1f2630c39A1E15A2EE`; its key is never included in the
+site. On-chain quotas apply even when the page is bypassed. Browser signing does
+not authenticate who controls the recipient address.
 
-1. Install the lockfile with `npm ci` (Node 20.19 or later).
-2. Copy `server/config.example.json` to the ignored `server/config.json`. Fill the
-   verified deployment addresses, chain, and operator-reviewed fee policy. Values
-   marked `REQUIRED_...` are intentionally not runnable defaults. The service quotes
-   primary round-zero fees and adds the reserved finalization-message gas budget.
-3. Set `FAUCET_ADMIN_PRIVATE_KEY` in the ignored `.env.server`, for a dedicated
-   signer configured as `vault.admin()`. Fund it for consensus fees and gas.
-4. Run `npm run serve:api`. It performs read-only preflight before listening.
-5. Expose the API through the page administrator's HTTPS reverse proxy. Configure
-   allowed origins and request limits there. CORS is a browser policy, not user
-   authentication; the on-chain per-wallet/global limits remain authoritative.
-6. Set `VITE_API_URL` for `npm run build`, or set the repository variable
-   `TRIVIA_API_URL` for the Pages workflow. GitHub Pages hosts only the static UI;
-   it does not host the admin API. The API defaults to `127.0.0.1:8787`.
+Run `npm ci`, `npm test`, and `npm run build`. For local signing, provide
+`VITE_TRIVIA_FAUCET_PRIVATE_KEY` through the environment or an ignored `.env.local`.
+The key must match the configured admin address. Publishing uses the existing
+GitHub Pages workflow; no API URL or separate server is needed.
 
-Never set a `VITE_*` variable to a private key. The old `VITE_FAUCET_PK` path and
-Pages secret injection have been removed. Retire the previous browser-exposed
-signer when rolling out the new vault, and authorize the new server signer.
+The server tools remain optional for operators: copy `server/config.example.json`
+to ignored `server/config.json`, fill the verified vault/ghost/fee policy, and set
+`FAUCET_ADMIN_PRIVATE_KEY` in ignored `.env.server`. They use the same submission
+client as the page.
 
 ## Requests and recovery
 
-The page saves a random uint256 request ID before its first HTTP request. Duplicate
-requests return the existing on-chain transaction. The API serializes writes to
-avoid signer nonce races. If a broadcast outcome is uncertain, it stops admitting
-new writes until the operator resolves that transaction and restarts the service.
-Do not restart while the transaction is still pending; resume with the same request
-ID. The browser preserves IDs across reloads and never reports accepted work as paid.
+The page saves a random uint256 request ID before its first broadcast. Duplicate
+requests return the existing on-chain transaction. Each browser serializes its writes and retries explicit nonce conflicts between
+visitors with the same request ID. If a broadcast outcome is uncertain, that browser stops new writes until the transaction is reconciled. Do not
+create a replacement request ID while the original outcome is uncertain. The browser preserves IDs across reloads and never reports accepted work as paid.
 
 Canceled/failed requests can be reconciled with:
 
@@ -86,11 +83,11 @@ for a full 50-request queue, plus separate admin gas and consensus fees.
 npm test
 npm run build
 # Start a disposable Hardhat node from the paired consensus checkout on port 18545.
-# Compile the paired contracts, then run the real API against the deployed vault:
+# Compile the paired contracts, then run the shared browser client against the deployed vault:
 CONSENSUS_ARTIFACTS=/absolute/path/to/consensus/artifacts npm run test:integration
 ```
 
-The integration test uses the real vault and service, with consensus progression
+The integration test uses the real vault and browser submission client, with consensus progression
 mocked. It verifies concurrent duplicate submissions, current calldata/fee
 forwarding, finalization-only payout, replay protection, and quota enforcement.
 A live Bradbury smoke test is still required after the new faucet deployment:
@@ -115,4 +112,4 @@ Bradbury smoke test cover those boundaries.
 
 Wallets, questions and answers are public blockchain data. Do not enter secrets or
 confidential information in the page. Admission uses Orbit block timestamps; the
-service's rate display is informational and the vault enforces the limits.
+page's rate display is informational and the vault enforces the limits.

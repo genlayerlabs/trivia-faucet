@@ -1,6 +1,16 @@
-import { formatEther, hexlify, randomBytes } from "ethers";
+import { Wallet, formatEther, hexlify, randomBytes } from "ethers";
+import { createService } from "../shared/client.mjs";
+import deployment from "./deployment.json";
+import { FaucetProvider } from "../shared/provider.mjs";
 
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+// The operator explicitly uses a public, low-balance browser signer.
+const key = import.meta.env.VITE_TRIVIA_FAUCET_PRIVATE_KEY || "";
+const provider = new FaucetProvider(deployment.rpcUrl);
+const signer = key ? new Wallet(key, provider) : null;
+if (signer && signer.address.toLowerCase() !== deployment.admin.toLowerCase())
+  throw new Error("Faucet signing key does not match the configured wallet");
+const service = createService({ provider, signer, config: deployment });
+let ready: Promise<void> | undefined;
 export const EXPLORER_URL = "https://explorer-bradbury.genlayer.com";
 export interface Admission {
   dailyRemaining: number;
@@ -35,24 +45,18 @@ export interface SavedRequest {
 }
 const STORAGE_KEY = "trivia-faucet-requests-v2";
 
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!API_URL) throw new Error("Faucet submissions are not configured yet");
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    signal: AbortSignal.timeout(135000),
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "Faucet request failed");
-  return result;
-}
 export function isWriteReady() {
-  return Boolean(API_URL);
+  return Boolean(
+    deployment.enabled &&
+      signer &&
+      /^0x[0-9a-fA-F]{40}$/.test(deployment.vault),
+  );
 }
-export function getAdmission(address: string) {
-  return api<Admission>(`/api/admission/${encodeURIComponent(address)}`);
+export async function getAdmission(address: string): Promise<Admission> {
+  return service.admission(address);
 }
-export function getRequest(id: string) {
-  return api<RequestState>(`/api/requests/${id}`);
+export async function getRequest(id: string): Promise<RequestState> {
+  return service.request(id) as Promise<RequestState>;
 }
 export function savedRequests(): SavedRequest[] {
   try {
@@ -72,7 +76,7 @@ export async function submitTrivia(
   answer: string,
   recipient: string,
 ) {
-  // Save before sending. An HTTP timeout must not cause a fresh on-chain play.
+  // Save before broadcasting. Retries must use the same on-chain request ID.
   const existing = savedRequests().find(
     (request) =>
       !request.confirmed &&
@@ -87,11 +91,14 @@ export async function submitTrivia(
     recipient,
   };
   if (!existing) saveRequests([...savedRequests(), request]);
-  const result = await api<RequestState>("/api/trivia", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
+  if (!isWriteReady())
+    throw new Error("Faucet signing wallet is not configured");
+  ready ||= service.preflight().catch((error: Error) => {
+    ready = undefined;
+    throw error;
   });
+  await ready;
+  const result = (await service.submit(request)) as RequestState;
   if (result.exists)
     saveRequests(
       savedRequests().map((item) =>

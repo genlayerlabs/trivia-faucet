@@ -4,23 +4,27 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   ContractFactory,
+  Wallet,
   JsonRpcProvider,
   hexlify,
   randomBytes,
   parseEther,
 } from "ethers";
-import { createService, encodeAnswer } from "../server/service.mjs";
+import { createService, encodeAnswer } from "../shared/client.mjs";
 
 // Run against a disposable Hardhat node and the paired consensus artifacts.
-// This uses the real service and vault, with only consensus progression mocked.
-test("API admission -> current struct/fees -> finalization -> exactly-once reward", async () => {
+// This uses the shared browser client and vault, with only consensus progression mocked.
+test("Browser client admission -> current struct/fees -> finalization -> exactly-once reward", async () => {
   if (!process.env.CONSENSUS_ARTIFACTS)
     throw new Error("CONSENSUS_ARTIFACTS is required");
   const provider = new JsonRpcProvider(
     process.env.TEST_RPC || "http://127.0.0.1:18545",
   );
   const owner = await provider.getSigner(0),
-    admin = await provider.getSigner(1);
+    admin = new Wallet(
+      "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+      provider,
+    );
   const alice = await (await provider.getSigner(2)).getAddress();
   async function deploy(path, args = []) {
     const a = JSON.parse(
@@ -74,6 +78,8 @@ test("API admission -> current struct/fees -> finalization -> exactly-once rewar
   };
   const service = createService({ provider, signer: admin, config });
   await service.preflight();
+  const reader = createService({ provider, signer: null, config });
+  assert.equal((await reader.admission(alice)).dailyRemaining, 5);
   const input = {
     requestId: hexlify(randomBytes(32)),
     recipient: alice,
@@ -129,7 +135,17 @@ test("API admission -> current struct/fees -> finalization -> exactly-once rewar
     ...input,
     requestId: hexlify(randomBytes(32)),
   }));
-  await Promise.all(submissions.map((item) => service.submit(item)));
+  // Independent browser sessions cannot share an in-memory nonce queue.
+  const otherBrowser = createService({
+    provider,
+    signer: new Wallet(admin.privateKey, provider),
+    config,
+  });
+  await Promise.all([
+    service.submit(submissions[0]),
+    otherBrowser.submit(submissions[1]),
+  ]);
+  await Promise.all(submissions.slice(2).map((item) => service.submit(item)));
   await assert.rejects(
     service.submit({ ...input, requestId: hexlify(randomBytes(32)) }),
     /Five attempts/,

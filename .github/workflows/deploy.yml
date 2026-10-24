@@ -28,7 +28,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_API_URL: ${{ vars.TRIVIA_API_URL }}
+          VITE_TRIVIA_FAUCET_PRIVATE_KEY: ${{ secrets.TRIVIA_FAUCET_PRIVATE_KEY }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

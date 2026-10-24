@@ -80,6 +80,8 @@ async function refresh() {
     $("user-claims").textContent = formatGEN(state.claimed);
     const wait = Math.max(0, Math.ceil((state.retryAt - state.now) / 60));
     quota.textContent = `${state.dailyRemaining}/5 attempts remaining in the last 24 hours · ${state.userPending}/5 pending · Faucet queue ${state.globalPending}/50. ${state.reason || ""}${wait ? ` Check again in ${wait} min.` : ""}`;
+    if (!isWriteReady())
+      quota.textContent += " Submissions are temporarily paused.";
     if (BigInt(state.credits) > 0n)
       quota.textContent += ` ${formatGEN(state.credits)} is available to claim from the vault.`;
     const entries = await Promise.all(
@@ -173,6 +175,6 @@ if (address) chooseAddress();
 else
   quota.textContent = isWriteReady()
     ? "Select a wallet to see your remaining attempts."
-    : "Faucet submissions are not configured yet.";
+    : "Faucet submissions are temporarily paused.";
 button();
 setInterval(() => void refresh(), 15000);
