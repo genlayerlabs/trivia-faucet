@@ -26,12 +26,23 @@ RPC `https://rpc.testnet-chain.genlayer.com`. This is the instance selected at
 epoch 2; it advanced to epoch 3 before rollout. The older Orbit book in
 `v0.6-rc-1` identifies a different deployment and must not be used.
 
-`src/deployment.json` contains public addresses and fee policy. The new vault is
-`0x41604b0d7fA8B4b0F771E94b1cf79384C87cc12f`. The first IC deployment attempt at
-`0xb494DCD35146AeD366872aD6A4f0b9b076070629` reached an accepted **execution error**;
-it is not a working deployment. The vault holds the authorized 2,500 GEN reward
-reserve; the failed ghost is not authorized to request payouts. Submissions remain disabled (`enabled: false`)
-until a successful deployment, vault authorization and live payout test.
+`src/deployment.json` contains public addresses and fee policy. The vault is
+`0x41604b0d7fA8B4b0F771E94b1cf79384C87cc12f`; the finalized working IC is
+`0x715bcfcBbD61B8540a798A235BBB6771b1c1CBd4`. The vault was funded with the
+authorized 2,500 GEN and has authorized this IC. A real answer paid **40 GEN only
+after finalization**, with wallet/global pending counters falling from 1 to 0.
+Smoke consensus ID:
+`0x67996b9bf7af997fd29336bc1b87fa0e8520fcd3394a949a63f3ae5d6dd71247`.
+The configuration now enables submissions. GitHub Pages permits deployments
+from `main` only; this PR must land before the prepared update is published.
+
+The previous deployment failures were caused by using Studio's older Python
+runtime dependency. The current source copies the dependency used by successful
+Bradbury deployments (`py-genlayer:babwp9…`, GenVM Manager v0.6.0-rc10).
+All 22 direct contract tests pass with that runtime. Studio currently rejects
+schema inspection for it, so the historical Studio result is not validation of
+the current source. See [fee measurements](docs/fee-calibration.md) for the
+controlled comparison and finalization evidence.
 
 The selected browser signer is `0x485E1588cf917a5db01018FA32D0BF0C8C5c1fFf`.
 Set the GitHub repository secret `TRIVIA_FAUCET_PRIVATE_KEY`; the Pages workflow

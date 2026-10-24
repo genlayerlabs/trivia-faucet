@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createAccount, createClient } from "genlayer-js";
-import { testnetBradbury, studioDevnet } from "genlayer-js/chains";
+import { testnetBradbury } from "genlayer-js/chains";
 import { CalldataAddress } from "genlayer-js/types";
 import { keccak256 } from "ethers";
 
@@ -24,10 +24,10 @@ const config = JSON.parse(
 const source = readFileSync(sourcePath);
 const sourceSha256 = createHash("sha256").update(source).digest("hex");
 const validated =
-  "b4370f9ae7dc6c1aa4d764a155706b524bc058c826ff5c99b9af17191454296e";
+  "8221c97cf22bd2ca2d4fb5f55d0e2815cb0397d6413b1fa8e41cf55ee330a714";
 if (sourceSha256 !== validated)
   throw new Error(
-    "Source differs from the Studio-validated contract; re-profile before deployment",
+    "Source differs from the Bradbury-runtime-tested contract; re-test before deployment",
   );
 const key = process.env.TRIVIA_FAUCET_PRIVATE_KEY;
 if (!key) throw new Error("TRIVIA_FAUCET_PRIVATE_KEY is required");
@@ -182,19 +182,21 @@ try {
       throw new Error(
         "Faucet signer has an outstanding envelope; reconcile it first",
       );
-    const studio = createClient({ chain: studioDevnet });
-    const measured = await studio.getTransaction({
-      hash: "0x126d4ff39991c7d37c480b84e60085873673ff83ab42a0997658112309ad7daa",
+    // Compare against an actual successful deployment on this Bradbury instance.
+    // Its successful outcome verifies the reference; quote Trivia separately.
+    const reference = await client.getTransaction({
+      hash: "0xd96a9876dffe01c5597dd1d4b02056be93cf7393ec944c1b360a6a4075d43b11",
     });
     if (
-      measured.lifecycle.state !== "finalized" ||
-      measured.lifecycle.outcome !== "accepted" ||
-      Number(measured.txExecutionResult) !== 1
+      reference.lifecycle.state !== "finalized" ||
+      reference.lifecycle.outcome !== "accepted" ||
+      Number(reference.txExecutionResult) !== 1
     )
-      throw new Error("Studio measurement must be finalized and accepted");
-    record.studioMeasurement = {
-      transaction: measured.hash,
-      fees: measured.fees,
+      throw new Error("Bradbury reference must be finalized and successful");
+    record.referenceDeployment = {
+      transaction: reference.txId,
+      status: reference.status,
+      executionResult: reference.txExecutionResult,
     };
     const fees = await client.estimateTransactionFees({
       executionBudgetPerRound: BigInt(config.deploymentExecutionBudget),
@@ -215,7 +217,7 @@ try {
     console.log(
       json({
         feeValue: fees.feeValue,
-        studioExecutionConsumed: measured.fees.consumed.executionConsumed,
+        referenceExecutionResult: reference.txExecutionResult,
         messageBudget: fees.distribution.totalMessageFees,
       }),
     );

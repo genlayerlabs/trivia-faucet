@@ -1,14 +1,32 @@
 # CON-1042 fee measurements — 2026-10-24
 
-The rollout remains disabled. The first two Bradbury IC attempts finalized with execution
-result `FinishedWithError (2)`. Consensus acceptance alone is not successful VM
-execution. The funded vault is unchanged and none of the failed ghosts is authorized.
+The deployment blocker was the Python runtime dependency. Sixteen successful
+Bradbury deployments in a 150-transaction sample used
+`py-genlayer:babwp9t37jw9g4j2bccgn14g6x7x9s1f7dsmh7emvz735pz4zxa0`.
+Changing only Trivia's dependency to that runner produced a finalized successful
+deployment at `0x715bcfcBbD61B8540a798A235BBB6771b1c1CBd4`, consensus ID
+`0x41d374b43aafacb46305cd83132b2eaf0db56b9f4d197051e6bdc539acb9c290`.
+The 2.5 GEN budget, 130/230-second allowances and contract logic were unchanged.
+The new source passed 22 direct tests against GenVM Manager v0.6.0-rc10.
+
+Successful deployment accounting: **0.00006193175000128 GEN** protocol fees,
+**0.00006476352 GEN** EVM gas, and **2.499938068250001506 GEN** returned.
+The copied reference EVM transaction is
+`0x32fbe3a41ed2a5151d9786bbc201141949cfe8dc9eebc8b6f1247395848915bd`.
+It used 300/300-second allowances, 0.01 GEN per round and three rotations;
+those settings were recorded for comparison, not needed to fix Trivia.
+
+The paired consensus evidence files `trivia_bradbury_deployment_comparison.json`
+and `trivia_bradbury_runtime_retry.json` preserve the comparison and result.
+Studio rejects schema inspection of the new runtime (-32603); the older Studio
+measurement below is historical and is not validation of the current runtime.
+The previous failed attempts below are retained as historical measurements.
 
 ## Deployment through genlayer.js
 
 `scripts/deploy-bradbury.mjs` uses the pinned `genlayer-js@2.0.0-rc.2`
 `estimateTransactionFees` and `deployContract` methods. It checks the genesis,
-consensus address, signer, exact Studio-validated source and outstanding nonce.
+consensus address, signer, exact Bradbury-runtime-tested source and outstanding nonce.
 The default mode quotes and prepares without broadcasting; `--submit` sends once.
 It journals the signed envelope hash before broadcast and refuses to reuse a
 journal for another send. `--status` reads the consensus outcome without sending.
@@ -127,3 +145,21 @@ consensus-read overhead still need a successful IC and live payout. The Studio
 2026-10-24 due to a server database transaction error (numeric value out of range).
 No write-fee measurement is inferred from that failure. Retain the conservative
 parent execution budget and message reserve until both measurements succeed.
+
+## Live finalization payout verified
+
+The shared browser submission client submitted request
+`0x7e6bc89b241e15a1dc1909eaad1238a407780c124081cf947ea3933249d1d688`
+through the real vault to the new IC. Consensus ID:
+`0x67996b9bf7af997fd29336bc1b87fa0e8520fcd3394a949a63f3ae5d6dd71247`.
+All five validators agreed on successful execution. At acceptance, reward and
+claimed balance were zero and both pending counters were 1. After finalization,
+the recipient balance increased by exactly **40 GEN**, the request settled with
+zero credit, and both pending counters became **0**. The receipt contains one
+external `fundWallet` message with `onAcceptance: false`, allocated 5,000,000 gas
+at the 500,000,000 wei cap. This completes the live Ghost/Messages dispatch check
+that the earlier local calibration could not cover.
+
+The paired consensus `trivia_bradbury_live_payout.json` contains the observations
+and receipts. No additional reward funding was sent. The dApp is configured for
+the working ghost; the existing Pages environment requires `main` for publication.
