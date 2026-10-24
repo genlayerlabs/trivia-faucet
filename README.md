@@ -113,3 +113,10 @@ Bradbury smoke test cover those boundaries.
 Wallets, questions and answers are public blockchain data. Do not enter secrets or
 confidential information in the page. Admission uses Orbit block timestamps; the
 page's rate display is informational and the vault enforces the limits.
+
+## Deployment and message fee evidence
+
+See [fee calibration](docs/fee-calibration.md) for the genlayer.js deployment command,
+measured callback gas, exact message allocation and the SDK retry outcome. The
+second live deployment also finalized with a VM execution error; the page remains
+disabled pending diagnosis and a successful live payout.

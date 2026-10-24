@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  AbiCoder,
+  MaxUint256,
   ContractFactory,
   Wallet,
   JsonRpcProvider,
@@ -95,6 +97,33 @@ test("Browser client admission -> current struct/fees -> finalization -> exactly
   assert.equal(await mock.receivedFees(), 501234n);
   assert.equal(await mock.lastOnAcceptance(), false);
   assert.equal(await mock.lastCalldata(), encodeAnswer(input));
+  // Inspect the actual admitted envelope: reserve equals allocated external gas,
+  // targets only fundWallet, and cannot execute at acceptance.
+  const admitted = await vault.queryFilter(
+    vault.filters.Submitted(BigInt(input.requestId)),
+  );
+  const envelope = await provider.getTransaction(admitted[0].transactionHash);
+  const params = vault.interface.parseTransaction(envelope).args[2];
+  const allocation = params.messageAllocations[0];
+  assert.equal(params.messageAllocations.length, 1);
+  assert.equal(allocation.messageType, 0n);
+  assert.equal(allocation.onAcceptance, false);
+  assert.equal(allocation.parentIndex, MaxUint256);
+  assert.equal(allocation.recipient, vault.target);
+  assert.equal(
+    allocation.callKey,
+    vault.interface.getFunction("fundWallet").selector.padEnd(66, "0"),
+  );
+  const [allocatedGas, cappedPrice] = AbiCoder.defaultAbiCoder().decode(
+    ["uint256", "uint256"],
+    allocation.feeParams,
+  );
+  assert.equal(allocatedGas, BigInt(config.messageGasLimit));
+  assert.equal(cappedPrice, BigInt(config.messageMaxGasPrice));
+  assert.equal(allocation.budget, allocatedGas * cappedPrice);
+  assert.equal(params.feesDistribution.totalMessageFees, allocation.budget);
+  assert.equal(envelope.value, 1234n + allocation.budget);
+
   assert.equal((await service.admission(alice)).dailyRemaining, 4);
   await (await mock.setStatus(a.txId, 5)).wait();
   await assert.rejects(

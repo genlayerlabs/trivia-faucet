@@ -12,7 +12,9 @@
     "reconcile": "node --env-file=.env.server server/reconcile.mjs",
     "test:integration": "node --test integration/*.test.mjs",
     "cancel": "TRIVIA_OPERATION=cancel node --env-file=.env.server server/reconcile.mjs",
-    "test:studio": "node scripts/check-studio.mjs"
+    "test:studio": "node scripts/check-studio.mjs",
+    "deploy:ic": "node scripts/deploy-bradbury.mjs",
+    "profile:external": "node scripts/profile-external-message.mjs"
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3",
