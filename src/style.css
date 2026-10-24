@@ -23,7 +23,9 @@
   --transition: 150ms ease;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -36,7 +38,11 @@ html {
 }
 
 body {
-  font-family: 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Rubik",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -156,7 +162,7 @@ h2 {
 /* ---- BUTTONS ---- */
 
 .btn {
-  font-family: 'Rubik', sans-serif;
+  font-family: "Rubik", sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
   padding: 0.55rem 1.1rem;
@@ -268,7 +274,7 @@ h2 {
 }
 
 .mono {
-  font-family: 'Rubik', monospace;
+  font-family: "Rubik", monospace;
   letter-spacing: 0.02em;
 }
 
@@ -324,7 +330,7 @@ input[type="text"],
 input[type="password"],
 textarea {
   width: 100%;
-  font-family: 'Rubik', sans-serif;
+  font-family: "Rubik", sans-serif;
   font-size: 0.85rem;
   color: var(--text);
   background: var(--bg);
@@ -332,7 +338,9 @@ textarea {
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.8rem;
   outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
 }
 
 input::placeholder,
@@ -515,7 +523,7 @@ footer a:hover {
 }
 
 .result-reward.pending::after {
-  content: ' (pending finalization)';
+  content: " (pending finalization)";
   font-size: 0.7rem;
   font-weight: 400;
 }
@@ -538,7 +546,9 @@ a:hover {
 /* ---- ANIMATIONS ---- */
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeSlideIn {
@@ -563,7 +573,9 @@ a:hover {
 /* ---- RESPONSIVE ---- */
 
 @media (max-width: 600px) {
-  html { font-size: 14px; }
+  html {
+    font-size: 14px;
+  }
 
   header {
     flex-direction: column;
@@ -587,4 +599,11 @@ a:hover {
   .input-row {
     flex-direction: column;
   }
+}
+
+.request-list p {
+  padding: 1rem 0;
+  border-top: 1px solid #dde2e8;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }

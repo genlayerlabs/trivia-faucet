@@ -1,279 +1,180 @@
-import './style.css';
+import "./style.css";
 import {
-  getFaucetBalance,
-  getWalletBalance,
-  getTotalDistributed,
-  getUserClaims,
+  getAdmission,
+  getRequest,
+  savedRequests,
+  forgetRequest,
   submitTrivia,
-  waitForAcceptance,
-  getTransactionGrade,
-  waitForFinalization,
   isWriteReady,
+  formatGEN,
+  statusLabel,
   EXPLORER_URL,
-} from './contract';
-import { getRandomQuestion } from './questions';
-
-// ---- DOM refs ----
-
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-
-const faucetBalanceEl = $('faucet-balance');
-const totalDistEl = $('total-distributed');
-
-const inputAddress = $<HTMLInputElement>('input-address');
-const btnLookup = $<HTMLButtonElement>('btn-lookup');
-const addressError = $('address-error');
-const walletInfo = $('wallet-info');
-const walletAddressEl = $('wallet-address');
-const walletBalanceEl = $('wallet-balance');
-const userClaimsEl = $('user-claims');
-
-const triviaForm = $<HTMLFormElement>('trivia-form');
-const questionDisplay = $('question-display');
-const btnShuffle = $<HTMLButtonElement>('btn-shuffle');
-const inputAnswer = $<HTMLTextAreaElement>('input-answer');
-const btnSubmit = $<HTMLButtonElement>('btn-submit');
-
-const progressArea = $('progress-area');
-const stepSubmitIcon = $('step-submit-icon');
-const stepSubmitText = $('step-submit-text');
-const stepSubmit = $('step-submit');
-const stepConsensusIcon = $('step-consensus-icon');
-const stepConsensusText = $('step-consensus-text');
-const stepConsensus = $('step-consensus');
-const stepTransferIcon = $('step-transfer-icon');
-const stepTransferText = $('step-transfer-text');
-const stepTransfer = $('step-transfer');
-
-const resultArea = $('result-area');
-const resultGrade = $('result-grade');
-const resultReward = $('result-reward');
-const resultStatus = $('result-status');
-
-// ---- Step helpers ----
-
-function setStep(
-  el: HTMLElement,
-  icon: HTMLElement,
-  text: HTMLElement,
-  state: 'pending' | 'active' | 'done' | 'error',
-  label: string,
-) {
-  el.className = 'progress-step ' + state;
-  text.innerHTML = label;
-
-  icon.className = 'step-icon';
-  if (state === 'pending') icon.classList.add('checkbox');
-  else if (state === 'active') icon.classList.add('spinner');
-  else if (state === 'done') { icon.classList.add('check'); icon.textContent = '\u2713'; }
-  else if (state === 'error') { icon.classList.add('cross'); icon.textContent = '\u2715'; }
-
-  if (state !== 'done' && state !== 'error') icon.textContent = '';
+  type Admission,
+} from "./contract";
+import { getRandomQuestion } from "./questions";
+const $ = <T extends HTMLElement>(id: string) =>
+  document.getElementById(id) as T;
+const input = $<HTMLInputElement>("input-address");
+const answer = $<HTMLTextAreaElement>("input-answer");
+const submit = $<HTMLButtonElement>("btn-submit");
+let address = localStorage.getItem("trivia-faucet-addr") || "";
+let question = getRandomQuestion();
+let admission: Admission | null = null;
+let submitting = false;
+let refreshing = false;
+const quota = document.createElement("p");
+quota.setAttribute("role", "status");
+quota.className = "hint";
+$("trivia-form").prepend(quota);
+const requests = document.createElement("section");
+requests.setAttribute("aria-label", "Your trivia transactions");
+requests.className = "request-list";
+$("trivia-form").after(requests);
+function button() {
+  answer.disabled = submitting;
+  $<HTMLButtonElement>("btn-shuffle").disabled = submitting;
+  submit.textContent = submitting ? "Submitting…" : "Submit Answer";
+  submit.disabled =
+    submitting ||
+    !address ||
+    !isWriteReady() ||
+    !admission ||
+    Boolean(admission.reason);
 }
-
-function resetProgress() {
-  setStep(stepSubmit, stepSubmitIcon, stepSubmitText, 'pending', 'Submit transaction');
-  setStep(stepConsensus, stepConsensusIcon, stepConsensusText, 'pending', 'Wait for consensus');
-  setStep(stepTransfer, stepTransferIcon, stepTransferText, 'pending', 'Await finalization');
-  resultArea.classList.add('hidden');
+function newQuestion() {
+  question = getRandomQuestion();
+  $("question-display").textContent = question;
+  answer.value = "";
 }
-
-// ---- Address validation ----
-
-const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
-
-function isValidAddress(addr: string): boolean {
-  return ADDRESS_RE.test(addr);
+function showError(message: string) {
+  $("address-error").textContent = message;
+  $("address-error").classList.remove("hidden");
 }
-
-function shortenAddress(addr: string): string {
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
-
-// ---- State ----
-
-let currentAddress: string | null = localStorage.getItem('trivia-faucet-addr');
-let currentQuestion: string = getRandomQuestion();
-
-// ---- Init ----
-
-function init() {
-  questionDisplay.textContent = currentQuestion;
-
-  if (currentAddress && isValidAddress(currentAddress)) {
-    showWallet(currentAddress);
-  }
-
-  refreshStats();
-  setInterval(refreshStats, 30_000);
-
-  btnLookup.addEventListener('click', handleLookup);
-  inputAddress.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleLookup();
-  });
-
-  $('btn-clear').addEventListener('click', () => {
-    currentAddress = null;
-    localStorage.removeItem('trivia-faucet-addr');
-    walletInfo.classList.add('hidden');
-    inputAddress.value = '';
-    addressError.classList.add('hidden');
-    updateSubmitButton();
-  });
-
-  btnShuffle.addEventListener('click', () => {
-    currentQuestion = getRandomQuestion();
-    questionDisplay.textContent = currentQuestion;
-    inputAnswer.value = '';
-    progressArea.classList.add('hidden');
-    resultArea.classList.add('hidden');
-  });
-
-  triviaForm.addEventListener('submit', handleSubmit);
-}
-
-function handleLookup() {
-  const addr = inputAddress.value.trim();
-  addressError.classList.add('hidden');
-
-  if (!addr) return;
-
-  if (!isValidAddress(addr)) {
-    addressError.textContent = 'Invalid address. Must be 0x followed by 40 hex characters.';
-    addressError.classList.remove('hidden');
+function chooseAddress() {
+  const candidate = input.value.trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(candidate) || /^0x0{40}$/i.test(candidate)) {
+    showError("Enter a valid wallet address.");
     return;
   }
-
-  currentAddress = addr;
-  localStorage.setItem('trivia-faucet-addr', addr);
-  showWallet(addr);
+  address = candidate;
+  admission = null;
+  localStorage.setItem("trivia-faucet-addr", address);
+  $("address-error").classList.add("hidden");
+  $("wallet-info").classList.remove("hidden");
+  $("wallet-address").textContent =
+    `${address.slice(0, 6)}…${address.slice(-4)}`;
+  button();
+  void refresh();
 }
-
-function showWallet(addr: string) {
-  inputAddress.value = addr;
-  walletAddressEl.textContent = shortenAddress(addr);
-  walletInfo.classList.remove('hidden');
-  refreshWalletData(addr);
-  updateSubmitButton();
-}
-
-function updateSubmitButton() {
-  btnSubmit.disabled = !currentAddress || !isWriteReady();
-}
-
-// ---- Data refresh ----
-
-function refreshStats() {
-  getFaucetBalance()
-    .then((b) => (faucetBalanceEl.textContent = b))
-    .catch((e) => console.error('Failed to fetch faucet balance:', e));
-
-  getTotalDistributed()
-    .then((t) => (totalDistEl.textContent = t))
-    .catch((e) => console.error('Failed to fetch total distributed:', e));
-}
-
-function refreshWalletData(addr: string) {
-  walletBalanceEl.textContent = '...';
-  userClaimsEl.textContent = '...';
-
-  getWalletBalance(addr)
-    .then((b) => (walletBalanceEl.textContent = b))
-    .catch(() => (walletBalanceEl.textContent = '0 GEN'));
-
-  getUserClaims(addr)
-    .then((c) => (userClaimsEl.textContent = c))
-    .catch(() => (userClaimsEl.textContent = '0 GEN'));
-}
-
-// ---- Submit trivia ----
-
-async function handleSubmit(e: Event) {
-  e.preventDefault();
-
-  if (!currentAddress) return;
-
-  const question = currentQuestion;
-  const answer = inputAnswer.value.trim();
-  if (!question || !answer) return;
-
-  btnSubmit.disabled = true;
-  btnShuffle.disabled = true;
-  resultArea.classList.add('hidden');
-  progressArea.classList.remove('hidden');
-  resetProgress();
-
-  const recipient = currentAddress;
-
+async function refresh() {
+  if (!address || refreshing) return;
+  refreshing = true;
+  const selected = address;
   try {
-    // Step 1: Submit transaction
-    setStep(stepSubmit, stepSubmitIcon, stepSubmitText, 'active', 'Submitting transaction...');
-
-    const txHash = await submitTrivia(question, answer, recipient);
-
-    const txLink = `<a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">${txHash.slice(0, 10)}...${txHash.slice(-6)}</a>`;
-    setStep(stepSubmit, stepSubmitIcon, stepSubmitText, 'done', `Transaction submitted ${txLink}`);
-
-    // Step 2: Wait for consensus
-    setStep(stepConsensus, stepConsensusIcon, stepConsensusText, 'active', 'Waiting for consensus...');
-
-    await waitForAcceptance(txHash);
-
-    setStep(stepConsensus, stepConsensusIcon, stepConsensusText, 'done', 'Transaction accepted by consensus');
-
-    // Extract grade immediately from accepted transaction
-    const { grade, rewardGEN } = await getTransactionGrade(txHash, recipient);
-
-    // Show result card immediately with pending status
-    resultArea.classList.remove('hidden');
-    resultGrade.textContent = '\u2605'.repeat(grade) + '\u2606'.repeat(5 - grade);
-    resultReward.textContent = `+${rewardGEN} GEN`;
-    resultReward.classList.add('pending');
-    resultStatus.innerHTML = `<span class="finalization-pending">Pending finalization (~30 min)</span> · <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
-    resultStatus.style.color = '';
-
-    // Load a new question for next round
-    currentQuestion = getRandomQuestion();
-    questionDisplay.textContent = currentQuestion;
-    inputAnswer.value = '';
-
-    // Step 3: Wait for finalization
-    setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', 'Awaiting finalization... <span class="finalization-timer">(0/30 min)</span>');
-
-    const { finalized } = await waitForFinalization(txHash, (minutesElapsed, done) => {
-      if (!done) {
-        setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', `Awaiting finalization... <span class="finalization-timer">(${minutesElapsed}/30 min)</span>`);
+    const state = await getAdmission(selected);
+    if (address !== selected) return;
+    admission = state;
+    $("faucet-balance").textContent = formatGEN(state.balance);
+    $("total-distributed").textContent = formatGEN(state.totalDistributed);
+    $("wallet-balance").textContent = formatGEN(state.walletBalance);
+    $("user-claims").textContent = formatGEN(state.claimed);
+    const wait = Math.max(0, Math.ceil((state.retryAt - state.now) / 60));
+    quota.textContent = `${state.dailyRemaining}/5 attempts remaining in the last 24 hours · ${state.userPending}/5 pending · Faucet queue ${state.globalPending}/50. ${state.reason || ""}${wait ? ` Check again in ${wait} min.` : ""}`;
+    if (!isWriteReady())
+      quota.textContent += " Submissions are temporarily paused.";
+    if (BigInt(state.credits) > 0n)
+      quota.textContent += ` ${formatGEN(state.credits)} is available to claim from the vault.`;
+    const entries = await Promise.all(
+      savedRequests()
+        .filter(
+          (item) => item.recipient.toLowerCase() === selected.toLowerCase(),
+        )
+        .map(async (item) => {
+          try {
+            return { item, state: await getRequest(item.requestId) };
+          } catch {
+            return { item, state: null };
+          }
+        }),
+    );
+    if (address !== selected) return;
+    requests.replaceChildren();
+    for (const entry of entries) {
+      const row = document.createElement("p");
+      row.textContent = `${entry.item.question}: ${entry.state ? statusLabel(entry.state) : "Unable to refresh status; saved request retained"}. `;
+      if (entry.state?.txId) {
+        const link = document.createElement("a");
+        link.textContent = "View transaction";
+        link.href = `${EXPLORER_URL}/tx/${entry.state.txId}`;
+        link.target = "_blank";
+        link.rel = "noopener";
+        row.append(link);
       }
-    });
-
-    if (finalized) {
-      setStep(stepTransfer, stepTransferIcon, stepTransferText, 'done', `Finalized — ${rewardGEN} GEN sent to your wallet`);
-      resultReward.textContent = `+${rewardGEN} GEN`;
-      resultReward.classList.remove('pending');
-      resultStatus.innerHTML = `<span class="finalization-done">Finalized</span> · <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">View on Explorer</a>`;
-    } else {
-      setStep(stepTransfer, stepTransferIcon, stepTransferText, 'active', `Still processing — <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" rel="noopener">check explorer</a>`);
+      // Keep uncertain requests: their IDs are needed for safe retries.
+      if (entry.state?.settled) {
+        const dismiss = document.createElement("button");
+        dismiss.textContent = "Dismiss";
+        dismiss.className = "btn btn-ghost btn-sm";
+        dismiss.onclick = () => {
+          forgetRequest(entry.item.requestId);
+          void refresh();
+        };
+        row.append(" ", dismiss);
+      }
+      requests.append(row);
     }
-
-    refreshStats();
-    refreshWalletData(recipient);
-  } catch (err: any) {
-    // Mark whichever step is active as error
-    const activeStep = document.querySelector('.progress-step.active');
-    if (activeStep) {
-      const icon = activeStep.querySelector('.step-icon') as HTMLElement;
-      const text = activeStep.querySelector('.step-text') as HTMLElement;
-      activeStep.className = 'progress-step error';
-      icon.className = 'step-icon cross';
-      icon.textContent = '\u2715';
-      text.textContent = err?.message || 'Something went wrong. Please try again.';
+  } catch (error) {
+    if (address === selected) {
+      admission = null;
+      quota.textContent = (error as Error).message;
     }
   } finally {
-    btnShuffle.disabled = false;
-    updateSubmitButton();
+    refreshing = false;
+    button();
+    if (address && address !== selected) void refresh();
   }
 }
-
-// ---- Start ----
-
-init();
+$("btn-lookup").onclick = chooseAddress;
+input.onkeydown = (event) => {
+  if (event.key === "Enter") chooseAddress();
+};
+$("btn-clear").onclick = () => {
+  address = "";
+  admission = null;
+  localStorage.removeItem("trivia-faucet-addr");
+  input.value = "";
+  $("wallet-info").classList.add("hidden");
+  requests.replaceChildren();
+  quota.textContent = "";
+  button();
+};
+$("btn-shuffle").onclick = newQuestion;
+$("trivia-form").onsubmit = async (event) => {
+  event.preventDefault();
+  if (submitting || !address || !answer.value.trim()) return;
+  submitting = true;
+  button();
+  $("address-error").classList.add("hidden");
+  const selected = address;
+  try {
+    const latest = await getAdmission(selected);
+    if (latest.reason) throw new Error(latest.reason);
+    await submitTrivia(question, answer.value.trim(), selected);
+    newQuestion();
+  } catch (error) {
+    showError((error as Error).message);
+  } finally {
+    submitting = false;
+    await refresh();
+    button();
+  }
+};
+newQuestion();
+input.value = address;
+if (address) chooseAddress();
+else
+  quota.textContent = isWriteReady()
+    ? "Select a wallet to see your remaining attempts."
+    : "Faucet submissions are temporarily paused.";
+button();
+setInterval(() => void refresh(), 15000);
