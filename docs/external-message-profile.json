@@ -1,0 +1,25 @@
+{
+  "measuredAt": "2026-10-24T11:26:16.215Z",
+  "vaultBytecodeSha256": "b5d403dda088e2140a4621643751e6ef7f60227c07a099803caef5f64d531c43",
+  "environment": "Hardhat; real vault, mocked consensus reads, direct authenticated ghost callback",
+  "limitation": "Live Ghost/Messages dispatch and actual Bradbury consensus-read costs still require a successful live IC. No live payout has been claimed.",
+  "gasLimit": "5000000",
+  "headroomPercent": 50,
+  "samples": [
+    {
+      "scenario": "first payout to new wallet",
+      "estimatedGas": "230952",
+      "receiptGasUsed": "215780"
+    },
+    {
+      "scenario": "reward credited after recipient revert",
+      "estimatedGas": "206086",
+      "receiptGasUsed": "191152"
+    },
+    {
+      "scenario": "reward credited when recipient needs more transfer gas",
+      "estimatedGas": "206113",
+      "receiptGasUsed": "191177"
+    }
+  ]
+}

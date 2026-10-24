@@ -1,0 +1,30 @@
+{
+  "chainId": 4221,
+  "rpcUrl": "https://rpc.testnet-chain.genlayer.com",
+  "vault": "0x41604b0d7fA8B4b0F771E94b1cf79384C87cc12f",
+  "ghost": "0x715bcfcBbD61B8540a798A235BBB6771b1c1CBd4",
+  "consensusMain": "0x2E2766cbc3E5e61Ce93bBcdCBb3eAcB82082A019",
+  "consensusData": "0xc5FA6f82BEe53598825d6edf7E3e24613082c75B",
+  "feeManager": "0x7678587A847712f2A96082AC07883A88D0fc7245",
+  "messages": "0xD14B0489157FE420555F1e5A6AFBA031E978aCE5",
+  "initialValidators": 5,
+  "maxRotations": 0,
+  "messageGasLimit": "5000000",
+  "messageMaxGasPrice": "500000000",
+  "feesDistribution": {
+    "leaderTimeunitsAllocation": 130,
+    "validatorTimeunitsAllocation": 230,
+    "appealRounds": 0,
+    "executionBudgetPerRound": "1000000000000000000",
+    "executionConsumed": 0,
+    "totalMessageFees": 0,
+    "rotations": [0],
+    "maxPriceGenPerTimeUnit": "2",
+    "storageFeeMaxGasPrice": "500000000",
+    "receiptFeeMaxGasPrice": "500000000"
+  },
+  "transactionManager": "0xaCe5e4191Bf408957538Caa9493aBB64F63D92c4",
+  "admin": "0x485E1588cf917a5db01018FA32D0BF0C8C5c1fFf",
+  "enabled": true,
+  "deploymentExecutionBudget": "2500000000000000000"
+}

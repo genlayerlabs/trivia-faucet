@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,13 +7,22 @@
     <link rel="icon" type="image/png" href="/trivia-faucet/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="app">
       <header>
         <div class="header-brand">
-          <img src="/trivia-faucet/favicon.png" alt="GenLayer" class="logo" width="32" height="32" />
+          <img
+            src="/trivia-faucet/favicon.png"
+            alt="GenLayer"
+            class="logo"
+            width="32"
+            height="32"
+          />
           <div>
             <h1>Trivia Faucet</h1>
             <span class="badge">Bradbury Testnet</span>
@@ -34,9 +43,18 @@
       <main>
         <section class="card" id="wallet-section">
           <h2>Wallet</h2>
-          <p class="hint">Paste your wallet address to check your GEN balance and trivia earnings.</p>
+          <p class="hint">
+            Paste your wallet address to check your GEN balance and trivia
+            earnings.
+          </p>
           <div class="input-row">
-            <input type="text" id="input-address" placeholder="0x..." spellcheck="false" autocomplete="off" />
+            <input
+              type="text"
+              id="input-address"
+              placeholder="0x..."
+              spellcheck="false"
+              autocomplete="off"
+            />
             <button id="btn-lookup" class="btn btn-primary">Lookup</button>
           </div>
           <p id="address-error" class="error-text hidden"></p>
@@ -61,62 +79,67 @@
 
         <section class="card">
           <h2>Answer Trivia</h2>
-          <p class="hint">Answer the question below about GenLayer. An AI evaluator grades your response (1–5 stars) and you earn <strong>10 GEN per star</strong>. Funds are sent after the transaction is finalized (~30 min).</p>
+          <p class="hint">
+            Answer the question below about GenLayer. An AI evaluator grades
+            your response (1–5 stars) and you earn
+            <strong>10 GEN per star</strong>. Rewards are paid after
+            finalization. Each wallet can submit five answers in a rolling
+            24-hour period, with up to five transactions pending.
+          </p>
 
           <form id="trivia-form">
             <div class="field">
               <div class="question-header">
                 <label>Question</label>
-                <button type="button" id="btn-shuffle" class="btn btn-ghost btn-sm" title="New question">Shuffle</button>
+                <button
+                  type="button"
+                  id="btn-shuffle"
+                  class="btn btn-ghost btn-sm"
+                  title="New question"
+                >
+                  Shuffle
+                </button>
               </div>
               <p class="question-display" id="question-display"></p>
             </div>
             <div class="field">
               <label for="input-answer">Your Answer</label>
-              <textarea id="input-answer" rows="4" placeholder="e.g. GenLayer uses Optimistic Democracy, where validators running different LLMs vote on the validity of non-deterministic AI operations..." required></textarea>
+              <textarea
+                id="input-answer"
+                rows="4"
+                maxlength="4000"
+                placeholder="e.g. GenLayer uses Optimistic Democracy, where validators running different LLMs vote on the validity of non-deterministic AI operations..."
+                required
+              ></textarea>
+              <p class="hint">
+                Answers and wallet addresses are public on-chain. Do not include
+                confidential information.
+              </p>
             </div>
-            <button type="submit" id="btn-submit" class="btn btn-primary btn-block" disabled>
+            <button
+              type="submit"
+              id="btn-submit"
+              class="btn btn-primary btn-block"
+              disabled
+            >
               Submit Answer
             </button>
           </form>
-
-          <div id="progress-area" class="hidden">
-            <div class="progress-card">
-              <div class="progress-step" id="step-submit">
-                <span class="step-icon" id="step-submit-icon"></span>
-                <span class="step-text" id="step-submit-text">Submitting transaction...</span>
-              </div>
-              <div class="progress-step" id="step-consensus">
-                <span class="step-icon" id="step-consensus-icon"></span>
-                <span class="step-text" id="step-consensus-text">Waiting for consensus...</span>
-              </div>
-              <div class="progress-step" id="step-transfer">
-                <span class="step-icon" id="step-transfer-icon"></span>
-                <span class="step-text" id="step-transfer-text">Await finalization</span>
-              </div>
-            </div>
-          </div>
-
-          <div id="result-area" class="hidden">
-            <div class="result-card">
-              <div class="result-header">
-                <span class="result-grade" id="result-grade"></span>
-                <span class="result-reward" id="result-reward"></span>
-              </div>
-              <p class="result-status" id="result-status"></p>
-            </div>
-          </div>
         </section>
       </main>
 
       <footer>
         <p>
-          Contract
-          <a href="https://explorer-bradbury.genlayer.com/address/0xDF0bb9da188eeA054E9c3B78d4EDD6d16CD57F09" target="_blank" rel="noopener">0xDF0b…7F09</a>
+          <a href="https://docs.genlayer.com" target="_blank" rel="noopener"
+            >Docs</a
+          >
           &middot;
-          <a href="https://docs.genlayer.com" target="_blank" rel="noopener">Docs</a>
-          &middot;
-          <a href="https://github.com/genlayerlabs/trivia-faucet" target="_blank" rel="noopener">Source</a>
+          <a
+            href="https://github.com/genlayerlabs/trivia-faucet"
+            target="_blank"
+            rel="noopener"
+            >Source</a
+          >
         </p>
       </footer>
     </div>

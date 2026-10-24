@@ -1,0 +1,28 @@
+name: Trivia faucet CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, codex/con-1042-trivia-faucet]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trivia-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=moderate
